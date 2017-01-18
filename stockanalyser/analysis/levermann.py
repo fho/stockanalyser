@@ -9,7 +9,7 @@ from stockanalyser import fileutils
 
 logger = logging.getLogger(__name__)
 
-THIS_YEAR = date.today().year - 1
+THIS_YEAR = date.today().year
 LAST_YEAR = date.today().year - 1
 
 
