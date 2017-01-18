@@ -1,0 +1,57 @@
+Features
+========
+- save/load stock data from file
+- get stock data (prices, etc) from yahoo or other websites
+- recalculate stock rating periodically
+- save old stock ratings
+
+
+
+# TODO: 
+- add CLI:
+ - allow to enter new STocks with symbol
+ - offer to load stock data if it already exist
+   - check which values are outdated and have to be entered again
+
+- check also main.py with pylint
+
+- EBIT Margin for 2016 still not available for a lot of stocks at January 2017,
+  how to handle it? The program asks for ebit margin of 2016
+  Check if current date < 2. quarter of the year? If yes, ask if the data from
+  the previous year should be used?
+- allow to enter NO analyst rating on the CLI, some stocks dont have a analyst
+  rating on yahoo
+- add README.mde file for github
+- clean up code, push to github
+- add todos to github
+- don't mix up currencies, e.g. get stock quote in USD and have EPS from
+  onvista in EUR 
+- get some fundamental data from https://blog.quandl.com/api-for-stock-data (eg
+  ebit margin)
+- add support for non-Dax Stocks
+- write more tests, ensure functions are also working correctly in corner cases
+  (getting quotes on weekend  days, year breaks, etc)
+- only ask for stock data that is outdated on the CLI
+- require to enter currency symbol for market cap, output the currency symbol
+  from stock.__str__()
+- Store portfolio
+- store previous levermann rating to compare it with the current one, if the
+  stock was bought and lost >=2 Points advise to sell it
+- store Levermann CriteriaRating in EvaluationResult to archive all previous
+  evaluation results
+- store objects as JSON instead of using pickle? Would make it easier to
+  transist objects to new versions?
+- store yahoo and onvista fundamental analysis website link in stock, show it
+  when entering data to make it easier to find the data?
+- Rename input module, to not clash with the naming of the input() function
+- make levermann evaluation threaded to speed it up (YQL queries take lot of
+  time)
+
+- todo: verify, do we also need the timezone for the quarterly figures
+release date??
+# could it happen that when the date for the quarterly figures is in a
+# differnt timezone than the stock exchange, that we compare the wrong
+# dates?
+# is it ensured that the quarterly figures are released during the time the
+# exchange is open? or could it be released outside of their opening hours
+# and we would have to check the following day instead?
