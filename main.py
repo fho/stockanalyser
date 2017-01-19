@@ -12,9 +12,15 @@ from stockanalyser import config, input
 
 logger = logging.getLogger(__name__)
 
+
 def set_leverman_values(stock):
     cur_year = datetime.date.today().year
     last_year = cur_year - 1
+
+    url = input.query_input("URL to onvista.de fundamental page for the stock",
+                            input.QueryType.URL)
+    stock.onvista_fundamental_url = url
+    stock.fetch_onvista_data()
 
     val = input.query_input("Analyst Recommendation Rating (from"
                             " https://finance.yahoo.com/quote/<SYMBOL>/analysts?p=<SYMBOL>)",
@@ -36,12 +42,6 @@ def set_leverman_values(stock):
     val = input.query_input("Date of last quarterly figures release",
                             input.QueryType.DATE)
     stock.last_quarterly_figures_date = val
-
-    for year in [cur_year + 1, cur_year, cur_year - 1, cur_year - 2,
-                 cur_year - 3]:
-        val = input.query_input("EPS for year %s" % year,
-                                input.QueryType.CURRENCY)
-        stock.set_eps(year, val)
 
 
 def load_levermann():
