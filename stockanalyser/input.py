@@ -12,6 +12,7 @@ class QueryType(Enum):
     DATE = 3
     YAHOO_ANALYST_RATING = 4
     STOCK_SYMBOL = 5
+    URL = 6
 
 
 def query_input(value_name, val_type):
@@ -42,6 +43,9 @@ def query_input(value_name, val_type):
                 if v >= 1 and v <= 5:
                     return v
             elif val_type == QueryType.STOCK_SYMBOL:
+                v = input("Please enter %s: " % value_name)
+                return v
+            elif val_type == QueryType.URL:
                 v = input("Please enter %s: " % value_name)
                 return v
 
