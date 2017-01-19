@@ -8,6 +8,7 @@ from stockanalyser.mymoney import Money
 from stockanalyser.exceptions import InvalidValueError
 from stockanalyser.config import *
 from stockanalyser import fileutils
+from stockanalyser.data_source.onvista import OnvistaFundamentalScraper
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -18,6 +19,10 @@ class UnknownValueError(Exception):
 
 
 class UnknownIndexError(Exception):
+    pass
+
+
+class MissingDataError(Exception):
     pass
 
 
@@ -50,8 +55,19 @@ class Stock(object):
         self.eps = {}
         self.last_quarterly_figures_date = None
         self._analyst_recommendation_rating = None
+        self.onvista_fundamental_url = None
 
         self.update_stock_info()
+
+    def fetch_onvista_data(self):
+        if not self.onvista_fundamental_url:
+            raise MissingDataError("onvista_fundamental_url isn't set")
+
+        scr = OnvistaFundamentalScraper(self.onvista_fundamental_url)
+        eps = scr.eps()
+        for k, v in eps.items():
+            if v is not None:
+                self.set_eps(k, v)
 
     @property
     def analyst_recommendation_rating(self):
@@ -85,7 +101,7 @@ class Stock(object):
     def set_eps(self, year, val):
         if not isinstance(val, Money):
             raise input.InvalidValueError("Expected value to be from type"
-                                          " Money")
+                                          " Money not %s" % type(val))
         eps = EPS(val, datetime.date.today())
 
         if year in self.eps:
