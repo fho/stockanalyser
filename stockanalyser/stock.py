@@ -69,6 +69,11 @@ class Stock(object):
             if v is not None:
                 self.set_eps(k, v)
 
+        ebit_margin = scr.ebit_margin()
+        for k, v in ebit_margin.items():
+            if v is not None:
+                self.set_ebit_margin(k, v)
+
     @property
     def analyst_recommendation_rating(self):
         return self._analyst_recommendation_rating
