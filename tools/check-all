@@ -1,0 +1,11 @@
+#!/bin/bash -eu
+
+basedir="$(dirname "$(readlink -f "$0")")"
+
+cd "$basedir"
+
+for i in *; do
+	if [ "$i" != $(basename $0) ]; then
+		./$i
+	fi
+done
