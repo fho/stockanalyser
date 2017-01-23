@@ -96,7 +96,7 @@ class OnvistaFundamentalScraper(object):
             if theader[i] == table_header:
                 continue
             result[theader[i]] = rows[i]
-        logger.debug("Extracted fundamental data %s" % result)
+        logger.debug("Extracted '%s' from onvista: %s" % (row_header, result))
 
         return result
 
