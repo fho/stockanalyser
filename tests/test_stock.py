@@ -1,4 +1,4 @@
-from stockanalyser.stock import Stock, UnknownValueError
+from stockanalyser.stock import Stock
 from stockanalyser import  input
 from datetime import date
 import pytest
@@ -39,14 +39,14 @@ def test_get_roe():
     s.set_roe(cur_year -10, 100)
     s.set_roe(cur_year +10, 0)
 
-    assert s.get_roe(cur_year) ==  63.12
-    assert s.get_roe(cur_year -10) ==  100
-    assert s.get_roe(cur_year +10) ==  0
+    assert s.roe[cur_year] ==  63.12
+    assert s.roe[cur_year -10] ==  100
+    assert s.roe[cur_year +10] ==  0
 
-    assert s.get_roe(cur_year +10) !=  1
+    assert s.roe[cur_year +10] !=  1
 
-    with pytest.raises(UnknownValueError):
-        s.get_roe(cur_year +2)
+    with pytest.raises(KeyError):
+        s.roe[cur_year +2]
 
 def test_per():
     cur_year = date.today().year

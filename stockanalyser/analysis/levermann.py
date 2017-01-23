@@ -129,8 +129,8 @@ class Levermann(object):
     def eval_earning_growth(self):
         logger.debug("Evaluating past and prognosed"
                      " earning growth")
-        eps_cur_year = self.stock.get_eps(THIS_YEAR)[-1].value
-        eps_next_year = self.stock.get_eps(THIS_YEAR + 1)[-1].value
+        eps_cur_year = self.stock.eps[THIS_YEAR][-1].value
+        eps_next_year = self.stock.eps[THIS_YEAR + 1][-1].value
 
         chg = ((eps_cur_year.amount / eps_next_year.amount) - 1) * 100
         logger.debug("EPS current year: %s\n"
@@ -254,8 +254,8 @@ class Levermann(object):
             return -1
 
     def eval_earning_revision(self):
-        cur_year_eps = self.stock.get_eps(THIS_YEAR)
-        next_year_eps = self.stock.get_eps(THIS_YEAR + 1)
+        cur_year_eps = self.stock.eps[THIS_YEAR]
+        next_year_eps = self.stock.eps[THIS_YEAR + 1]
 
         if len(cur_year_eps) < 2 or len(next_year_eps) < 2:
             self.earning_revision = CriteriaRating((None, None), 0)
@@ -386,7 +386,7 @@ class Levermann(object):
         return points
 
     def eval_roe(self):
-        roe = self.stock.get_roe(LAST_YEAR)
+        roe = self.stock.roe[LAST_YEAR]
 
         logger.debug("Evaluating RoE (%s): %s%%" % (LAST_YEAR, roe))
         if roe < 10:
@@ -403,7 +403,7 @@ class Levermann(object):
         return points
 
     def eval_equity_ratio(self):
-        equity_ratio = self.stock.get_equity_ratio(LAST_YEAR)
+        equity_ratio = self.stock.equity_ratio[LAST_YEAR]
 
         logger.debug("Evaluating equity ratio (%s): %s%%" % (LAST_YEAR,
                                                              equity_ratio))
@@ -422,7 +422,7 @@ class Levermann(object):
         return points
 
     def eval_ebit_margin(self):
-        ebit_margin = self.stock.get_ebit_margin(LAST_YEAR)
+        ebit_margin = self.stock.ebit_margin[LAST_YEAR]
 
         logger.debug("Evaluating EBIT-Margin %s" % ebit_margin)
         if ebit_margin < 6:

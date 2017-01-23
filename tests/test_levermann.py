@@ -62,7 +62,7 @@ def test_3month_reversal():
 
 def test_earning_growth():
     s = Stock("VOW.DE")
-    s.set_eps(datetime.date.today().year - 1, Money(1, "EUR"))
+    s.set_eps(datetime.date.today().year + 1, Money(1, "EUR"))
     s.set_eps(datetime.date.today().year, Money(5, "EUR"))
     l = Levermann(s)
     l.eval_earning_growth()

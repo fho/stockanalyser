@@ -14,10 +14,6 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-class UnknownValueError(Exception):
-    pass
-
-
 class UnknownIndexError(Exception):
     pass
 
@@ -49,7 +45,7 @@ class Stock(object):
 
         self.name = None
         self.market_cap = None
-        self._roe = {}
+        self.roe = {}
         self.ebit_margin = {}
         self.equity_ratio = {}
         self.eps = {}
@@ -103,11 +99,6 @@ class Stock(object):
                                     " yahoo: '%s'" %
                                     data["MarketCapitalization"])
 
-    def get_eps(self, year):
-        if year in self.eps:
-            return self.eps[year]
-        raise UnknownValueError("EPS for year '%s' not set" % year)
-
     def set_eps(self, year, val):
         if not isinstance(val, Money):
             raise input.InvalidValueError("Expected value to be from type"
@@ -119,30 +110,15 @@ class Stock(object):
         else:
             self.eps[year] = [eps]
 
-    def get_equity_ratio(self, year):
-        if year in self.equity_ratio:
-            return self.equity_ratio[year]
-        raise UnknownValueError("Equity Ratio for year '%s' not set" % year)
-
     def set_equity_ratio(self, year, val):
         self.equity_ratio[year] = val
-
-    def get_ebit_margin(self, year):
-        if year in self.ebit_margin:
-            return self.ebit_margin[year]
-        raise UnknownValueError("Ebit-margin for year '%s' not set" % year)
-
-    def get_roe(self, year):
-        if year in self._roe:
-            return self._roe[year]
-        raise UnknownValueError("RoE for year '%s' not set" % year)
 
     def set_ebit_margin(self, year, val):
         self.ebit_margin[year] = val
 
     def set_roe(self, year, val):
         input.validate_percent_value(val)
-        self._roe[year] = val
+        self.roe[year] = val
 
     def save(self, dir=DATA_PATH):
         path = stock_pickle_path(self.symbol)
