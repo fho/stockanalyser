@@ -74,6 +74,11 @@ class Stock(object):
             if v is not None:
                 self.set_ebit_margin(k, v)
 
+        equity_ratio = scr.equity_ratio()
+        for k, v in equity_ratio.items():
+            if v is not None:
+                self.set_equity_ratio(k, v)
+
     @property
     def analyst_recommendation_rating(self):
         return self._analyst_recommendation_rating
