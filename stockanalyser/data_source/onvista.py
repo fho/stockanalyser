@@ -131,14 +131,53 @@ class OnvistaFundamentalScraper(object):
         for i in range(len(ebit_margin_row)):
             if theader[i] == "rentabilität":
                 continue
-            print(theader[i])
             ebit_margin[theader[i]] = ebit_margin_row[i]
         logger.debug("Extracted EBIT-Margin data %s" % ebit_margin)
 
         return ebit_margin
 
+    def equity_ratio(self):
+        res = self.etree.findall('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                                 'article/article/div/table[6]/thead/tr/')
+        theader = self._get_table_header(res)
+
+        if theader[0] != "bilanz":
+            raise ParsingError("Unexpected table header: '%s'" % theader[0])
+
+        res = self.etree.findall('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                                 'article/article/div/table[6]/tbody/tr[2]/')
+        equity_ratio_row = []
+        for r in res:
+            v = self._normalize_number(r.text)
+            if v is not None and not len(v):
+                continue
+            if is_number(v):
+                v = float(v)
+            equity_ratio_row.append(v)
+
+        if equity_ratio_row[0] != "eigenkapitalquote":
+            raise ParsingError("Unexpected 1.equity-ratio row header: '%s'" %
+                               ebit_margin_row[0])
+
+        if len(theader) != len(equity_ratio_row):
+            raise ParsingError("Parsing error, table header contains more"
+                               " elements than rows:"
+                               "'%s' vs '%s'" % (theader, ebit_margin_row))
+
+        equity_ratio = {}
+        for i in range(len(equity_ratio_row)):
+            if theader[i] == "bilianz":
+                continue
+            equity_ratio[theader[i]] = equity_ratio_row[i]
+
+        logger.debug("Extracted equity-ratio data %s" % equity_ratio)
+
+        return equity_ratio
+
+
 if __name__ == "__main__":
     o = OnvistaFundamentalScraper("http://www.onvista.de/aktien/"
                                   "fundamental/Bayer-Aktie-DE000BAY0017")
+    print(o.equity_ratio())
     print(o.eps())
     print(o.ebit_margin())
