@@ -403,9 +403,17 @@ class Levermann(object):
         return points
 
     def eval_equity_ratio(self):
-        equity_ratio = self.stock.equity_ratio[LAST_YEAR]
+        last_year = LAST_YEAR
 
-        logger.debug("Evaluating equity ratio (%s): %s%%" % (LAST_YEAR,
+        if last_year not in self.stock.equity_ratio:
+            last_year -= 1
+            logger.debug("Equity ratio for year year %s"
+                         " not set. Evaluation Equity Ratio"
+                         " of year %s instead" % (LAST_YEAR, last_year))
+
+        equity_ratio = self.stock.equity_ratio[last_year]
+
+        logger.debug("Evaluating equity ratio (%s): %s%%" % (last_year,
                                                              equity_ratio))
         if equity_ratio < 15:
             logger.debug("Equity Ratio <10%: -1 Points")
@@ -422,7 +430,14 @@ class Levermann(object):
         return points
 
     def eval_ebit_margin(self):
-        ebit_margin = self.stock.ebit_margin[LAST_YEAR]
+        last_year = LAST_YEAR
+        if last_year not in self.stock.ebit_margin:
+            last_year -= 1
+            logger.debug("Ebit margin for year %s unknown."
+                         " Evaluating margin of year %s"
+                         " instead" % (LAST_YEAR, last_year))
+
+        ebit_margin = self.stock.ebit_margin[last_year]
 
         logger.debug("Evaluating EBIT-Margin %s" % ebit_margin)
         if ebit_margin < 6:
