@@ -27,14 +27,6 @@ def set_leverman_values(stock):
                             input.QueryType.YAHOO_ANALYST_RATING)
     stock.analyst_recommendation_rating = val
 
-    val = input.query_input("Ebit-margin for year %s" % last_year,
-                            input.QueryType.PERCENT)
-    stock.set_ebit_margin(last_year, val)
-
-    val = input.query_input("Equity Ratio for year %s" % last_year,
-                            input.QueryType.PERCENT)
-    stock.set_equity_ratio(last_year, val)
-
     val = input.query_input("RoE for year %s" % last_year,
                             input.QueryType.PERCENT)
     stock.set_roe(last_year, val)
