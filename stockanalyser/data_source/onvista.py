@@ -62,122 +62,75 @@ class OnvistaFundamentalScraper(object):
         v = v.replace("%", "")
         return v
 
-    def eps(self):
-        res = self.etree.findall('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
-                                 'article/article/div/table[1]/thead/tr/')
-
+    def _extract_from_table(self, table_xpath, table_header, row_xpath,
+                            row_header, is_money=False):
+        res = self.etree.findall(table_xpath)
         theader = self._get_table_header(res)
-        if theader[0] != "gewinn":
+        if theader[0] != table_header:
             raise ParsingError("Unexpected table header: '%s'" % theader[0])
 
-        res = self.etree.findall('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
-                                 'article/article/div/table[1]/tbody/tr[1]/')
-        eps_row = []
+        res = self.etree.findall(row_xpath)
+        rows = []
         for r in res:
             v = self._normalize_number(r.text)
             if v is not None and not len(v):
                 continue
-            if is_number(v):
-                v = Money(Decimal(v), "EUR")
-            eps_row.append(v)
+            elif is_number(v):
+                if is_money:
+                    v = Money(Decimal(v), "EUR")
+                else:
+                    v = float(v)
+            rows.append(v)
 
-        if eps_row[0] != "gewinn pro aktie in eur":
-            raise ParsingError("Unexpected 1. eps row header: '%s'" %
-                               eps_row[0])
+        if rows[0] != row_header:
+            raise ParsingError("Unexpected 1. row header: '%s' != '%s'" %
+                               (rows[0], row_header))
 
-        if len(theader) != len(eps_row):
+        if len(theader) != len(rows):
             raise ParsingError("Parsing error, table header contains more"
                                " elements than rows:"
-                               "'%s' vs '%s'" % (theader, eps_row))
+                               "'%s' vs '%s'" % (theader, rows))
 
-        eps = {}
-        for i in range(len(eps_row)):
-            if theader[i] == "gewinn":
+        result = {}
+        for i in range(len(rows)):
+            if theader[i] == table_header:
                 continue
-            eps[theader[i]] = eps_row[i]
-        logger.debug("Extracted EPS data %s" % eps)
+            result[theader[i]] = rows[i]
+        logger.debug("Extracted fundamental data %s" % result)
 
-        return eps
+        return result
+
+    def eps(self):
+        table_xpath = ('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                       'article/article/div/table[1]/thead/tr/')
+        row_xpath = ('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                     'article/article/div/table[1]/tbody/tr[1]/')
+
+        return self._extract_from_table(table_xpath, "gewinn", row_xpath,
+                                        "gewinn pro aktie in eur", True)
 
     def ebit_margin(self):
-        res = self.etree.findall('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
-                                 'article/article/div/table[8]/thead/tr/')
-        theader = self._get_table_header(res)
+        table_xpath = ('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                       'article/article/div/table[8]/thead/tr/')
+        row_xpath = ('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                     'article/article/div/table[8]/tbody/tr[2]/')
 
-        if theader[0] != "rentabilität":
-            raise ParsingError("Unexpected table header: '%s'" % theader[0])
-
-        res = self.etree.findall('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
-                                 'article/article/div/table[8]/tbody/tr[2]/')
-        ebit_margin_row = []
-        for r in res:
-            v = self._normalize_number(r.text)
-            if v is not None and not len(v):
-                continue
-            if is_number(v):
-                v = float(v)
-            ebit_margin_row.append(v)
-
-        if ebit_margin_row[0] != "ebit-marge":
-            raise ParsingError("Unexpected 1. ebit-margin row header: '%s'" %
-                               ebit_margin_row[0])
-
-        if len(theader) != len(ebit_margin_row):
-            raise ParsingError("Parsing error, table header contains more"
-                               " elements than rows:"
-                               "'%s' vs '%s'" % (theader, ebit_margin_row))
-
-        ebit_margin = {}
-        for i in range(len(ebit_margin_row)):
-            if theader[i] == "rentabilität":
-                continue
-            ebit_margin[theader[i]] = ebit_margin_row[i]
-        logger.debug("Extracted EBIT-Margin data %s" % ebit_margin)
-
-        return ebit_margin
+        return self._extract_from_table(table_xpath, "rentabilität", row_xpath,
+                                        "ebit-marge")
 
     def equity_ratio(self):
-        res = self.etree.findall('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
-                                 'article/article/div/table[6]/thead/tr/')
-        theader = self._get_table_header(res)
+        table_xpath = ('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                       'article/article/div/table[6]/thead/tr/')
+        row_xpath = ('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                     'article/article/div/table[6]/tbody/tr[2]/')
 
-        if theader[0] != "bilanz":
-            raise ParsingError("Unexpected table header: '%s'" % theader[0])
-
-        res = self.etree.findall('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
-                                 'article/article/div/table[6]/tbody/tr[2]/')
-        equity_ratio_row = []
-        for r in res:
-            v = self._normalize_number(r.text)
-            if v is not None and not len(v):
-                continue
-            if is_number(v):
-                v = float(v)
-            equity_ratio_row.append(v)
-
-        if equity_ratio_row[0] != "eigenkapitalquote":
-            raise ParsingError("Unexpected 1.equity-ratio row header: '%s'" %
-                               ebit_margin_row[0])
-
-        if len(theader) != len(equity_ratio_row):
-            raise ParsingError("Parsing error, table header contains more"
-                               " elements than rows:"
-                               "'%s' vs '%s'" % (theader, ebit_margin_row))
-
-        equity_ratio = {}
-        for i in range(len(equity_ratio_row)):
-            if theader[i] == "bilianz":
-                continue
-            equity_ratio[theader[i]] = equity_ratio_row[i]
-
-        logger.debug("Extracted equity-ratio data %s" % equity_ratio)
-
-        return equity_ratio
+        return self._extract_from_table(table_xpath, "bilanz", row_xpath,
+                                        "eigenkapitalquote")
 
 
 if __name__ == "__main__":
     o = OnvistaFundamentalScraper("http://www.onvista.de/aktien/"
                                   "fundamental/Bayer-Aktie-DE000BAY0017")
-    print(o.equity_ratio())
-    print(o.eps())
-    print(o.ebit_margin())
+    print("EPS: %s" % o.eps())
+    print("EBIT-MARGIN: %s" % o.ebit_margin())
+    print("EQUITY RATIO: %s" % o.equity_ratio())
