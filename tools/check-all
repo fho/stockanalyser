@@ -6,6 +6,10 @@ cd "$basedir"
 
 for i in *; do
 	if [ "$i" != $(basename $0) ]; then
+		echo "Running $i"
+		set +e
 		./$i
+		set -e
+		echo "---------------------------------------"
 	fi
 done
