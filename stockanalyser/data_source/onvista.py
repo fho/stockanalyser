@@ -127,10 +127,20 @@ class OnvistaFundamentalScraper(object):
         return self._extract_from_table(table_xpath, "bilanz", row_xpath,
                                         "eigenkapitalquote")
 
+    def roe(self):
+        table_xpath = ('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                       'article/article/div/table[8]/thead/tr/')
+        row_xpath = ('.//*[@id="ONVISTA"]/div[1]/div[1]/div[1]/'
+                     'article/article/div/table[8]/tbody/tr[4]/')
+
+        return self._extract_from_table(table_xpath, "rentabilität", row_xpath,
+                                        "eigenkapitalrendite")
+
 
 if __name__ == "__main__":
     o = OnvistaFundamentalScraper("http://www.onvista.de/aktien/"
                                   "fundamental/Bayer-Aktie-DE000BAY0017")
+    print("ROE: %s" % o.roe())
     print("EPS: %s" % o.eps())
     print("EBIT-MARGIN: %s" % o.ebit_margin())
     print("EQUITY RATIO: %s" % o.equity_ratio())
