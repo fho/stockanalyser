@@ -75,6 +75,11 @@ class Stock(object):
             if v is not None:
                 self.set_equity_ratio(k, v)
 
+        roe = scr.roe()
+        for k, v in roe.items():
+            if v is not None:
+                self.set_roe(k, v)
+
     @property
     def analyst_recommendation_rating(self):
         return self._analyst_recommendation_rating
