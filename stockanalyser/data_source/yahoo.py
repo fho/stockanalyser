@@ -36,7 +36,7 @@ def get_yql_result(params):
     return res["query"]["results"]["quote"]
 
 
-def get_stock_quote(symbol, date):
+def stock_quote(symbol, date):
     assert date.weekday() not in (6, 7)
     logger.debug("Retrieving stock quote for '%s' on %s" % (symbol, date))
     str_date = date.strftime("%Y/%m/%d")
@@ -63,6 +63,6 @@ def get_stock_info(symbol):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    r = get_stock_quote("VOW.DE", (datetime.datetime.now() -
+    r = stock_quote("VOW.DE", (datetime.datetime.now() -
                                    datetime.timedelta(days=1)).date())
     print(r)

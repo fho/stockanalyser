@@ -60,17 +60,17 @@ def test_per():
     s.set_eps(cur_year - 2, Money(4, "USD"))
     s.set_eps(cur_year - 3, Money(5, "USD"))
     per = s.quote / Money(((1 + 2 + 3 + 4 + 5) / 5.0), "USD")
-    assert s.get_5years_price_earnings_ratio() == per
+    assert s.price_earnings_ratio_5year() == per
 
     s.set_eps(cur_year - 4, Money(5, "USD"))
-    assert s.get_5years_price_earnings_ratio() == per
+    assert s.price_earnings_ratio_5year() == per
 
-    s.set_eps(cur_year + 1,Money(-1000, "USD"))
+    s.set_eps(cur_year + 1, Money(-1000, "USD"))
     per = s.quote / Money((-1000 + 2 + 3 + 4 + 5) / 5, "USD") 
     # value slightly differs starting from the 11 decimal place, maybe
     # because float and Decimal type are not used consistently in the Stock
     # class and in the test
     # comparing up to the 3. decimal type is sufficent:
-    assert round(s.get_5years_price_earnings_ratio(), 3) == round(per, 3)
+    assert round(s.price_earnings_ratio_5year(), 3) == round(per, 3)
 
-    assert s.get_price_earnings_ratio() == (s.quote / 2)
+    assert s.price_earnings_ratio() == (s.quote / 2)

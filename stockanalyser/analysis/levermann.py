@@ -157,13 +157,13 @@ class Levermann(object):
         # compare quote of stock with the quote of the reference index at the
         # last day of the month
         d = last_weekday_of_month(date)
-        ref_quote = yahoo.get_stock_quote(self.reference_index, d)
-        quote = yahoo.get_stock_quote(self.stock.symbol, d)
+        ref_quote = yahoo.stock_quote(self.reference_index, d)
+        quote = yahoo.stock_quote(self.stock.symbol, d)
 
         prev_month_date = last_weekday_of_month(prev_month(date))
-        prev_ref_quote = yahoo.get_stock_quote(self.reference_index,
+        prev_ref_quote = yahoo.stock_quote(self.reference_index,
                                                prev_month_date)
-        prev_quote = yahoo.get_stock_quote(self.stock.symbol, prev_month_date)
+        prev_quote = yahoo.stock_quote(self.stock.symbol, prev_month_date)
 
         ((prev_quote / quote) - 1) * 100
         ((prev_ref_quote / ref_quote) - 1) * 100
@@ -214,7 +214,7 @@ class Levermann(object):
 
     def _eval_quote_chg_daydiff(self, days_diff):
         before_date = closest_weekday(date.today() - timedelta(days=days_diff))
-        before_quote = yahoo.get_stock_quote(self.stock.symbol, before_date)
+        before_quote = yahoo.stock_quote(self.stock.symbol, before_date)
 
         chg = ((float(self.stock.quote.amount) / before_quote) - 1) * 100
         return (chg, self._calc_quite_chg_points(chg))
@@ -287,13 +287,13 @@ class Levermann(object):
         qf_date = self.stock.last_quarterly_figures_date
         qf_prev_day = prev_weekday(self.stock.last_quarterly_figures_date)
 
-        qf_previous_day_quote = yahoo.get_stock_quote(self.stock.symbol,
+        qf_previous_day_quote = yahoo.stock_quote(self.stock.symbol,
                                                       qf_prev_day)
-        qf_day_quote = yahoo.get_stock_quote(self.stock.symbol, qf_date)
+        qf_day_quote = yahoo.stock_quote(self.stock.symbol, qf_date)
         qf_reaction = ((qf_day_quote / qf_previous_day_quote) - 1) * 100
 
-        ref_index_quote = yahoo.get_stock_quote(self.reference_index, qf_date)
-        ref_previous_index_quote = yahoo.get_stock_quote(self.reference_index,
+        ref_index_quote = yahoo.stock_quote(self.reference_index, qf_date)
+        ref_previous_index_quote = yahoo.stock_quote(self.reference_index,
                                                          qf_prev_day)
         ref_index_chg = (((ref_index_quote / ref_previous_index_quote) - 1) *
                          100)
@@ -350,7 +350,7 @@ class Levermann(object):
         return points
 
     def eval_five_years_price_earnings_ratio(self):
-        per = self.stock.get_5years_price_earnings_ratio().amount
+        per = self.stock.price_earnings_ratio_5year().amount
         logger.debug("Evaluating 5year PER: %s" % (per))
 
         if per < 12:
@@ -368,7 +368,7 @@ class Levermann(object):
         return points
 
     def eval_price_earnings_ratio(self):
-        per = self.stock.get_price_earnings_ratio().amount
+        per = self.stock.price_earnings_ratio().amount
         logger.debug("Evaluating PER: %s" % (per))
 
         if per < 12:

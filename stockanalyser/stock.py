@@ -130,12 +130,12 @@ class Stock(object):
         with open(path, "wb") as f:
             pickle.dump(self, f)
 
-    def get_price_earnings_ratio(self):
+    def price_earnings_ratio(self):
         cur_year = datetime.date.today().year
 
         return self.quote / self.eps[cur_year][-1].value
 
-    def get_5years_price_earnings_ratio(self):
+    def price_earnings_ratio_5year(self):
         cur_year = datetime.date.today().year
         avg_per = (self.eps[cur_year + 1][-1].value +
                    self.eps[cur_year][-1].value +
