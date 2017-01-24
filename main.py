@@ -27,10 +27,6 @@ def set_leverman_values(stock):
                             input.QueryType.YAHOO_ANALYST_RATING)
     stock.analyst_recommendation_rating = val
 
-    val = input.query_input("RoE for year %s" % last_year,
-                            input.QueryType.PERCENT)
-    stock.set_roe(last_year, val)
-
     val = input.query_input("Date of last quarterly figures release",
                             input.QueryType.DATE)
     stock.last_quarterly_figures_date = val
