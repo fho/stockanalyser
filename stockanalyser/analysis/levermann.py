@@ -98,7 +98,7 @@ class Levermann(object):
                                     " %s < %s" % (self.stock.market_cap,
                                                   5*10**9))
 
-        self.reference_index = "DAX"
+        self.reference_index = "^GDAXI"
 
     def evaluate(self):
         points = 0
