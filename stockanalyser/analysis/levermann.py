@@ -386,9 +386,15 @@ class Levermann(object):
         return points
 
     def eval_roe(self):
-        roe = self.stock.roe[LAST_YEAR]
+        year = LAST_YEAR
+        if year not in self.stock.roe:
+            year -= 1
+            logger.debug("ROE for year year %s"
+                         " not set. Evaluation RoE "
+                         " of year %s instead" % (LAST_YEAR, year))
+        roe = self.stock.roe[year]
 
-        logger.debug("Evaluating RoE (%s): %s%%" % (LAST_YEAR, roe))
+        logger.debug("Evaluating RoE (%s): %s%%" % (year, roe))
         if roe < 10:
             logger.debug("ROE <10%: -1 Points")
             points = -1
