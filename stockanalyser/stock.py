@@ -27,6 +27,9 @@ class EPS(object):
         self.value = value
         self.update_date = date
 
+    def __str__(self):
+        return str(self.value)
+
 
 def stock_pickle_path(symbol, dir=DATA_PATH):
     filename = fileutils.to_pickle_filename(symbol)
@@ -142,6 +145,11 @@ class Stock(object):
                    self.eps[cur_year-1][-1].value +
                    self.eps[cur_year-2][-1].value +
                    self.eps[cur_year-3][-1].value) / 5
+        logger.debug("Calculating PER 5 Years: "
+                     "%s / (%s + %s + %s %s + %s) / 5" %
+                     (self.quote, self.eps[cur_year + 1][-1],
+                      self.eps[cur_year][-1], self.eps[cur_year-1][-1],
+                      self.eps[cur_year - 2][-1], self.eps[cur_year - 3][-1]))
 
         return self.quote / avg_per
 
