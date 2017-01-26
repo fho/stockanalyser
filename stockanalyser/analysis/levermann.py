@@ -132,7 +132,7 @@ class Levermann(object):
         eps_cur_year = self.stock.eps[THIS_YEAR][-1].value
         eps_next_year = self.stock.eps[THIS_YEAR + 1][-1].value
 
-        chg = ((eps_cur_year.amount / eps_next_year.amount) - 1) * 100
+        chg = ((eps_next_year.amount / eps_cur_year.amount) - 1) * 100
         logger.debug("EPS current year: %s\n"
                      "EPS next year: %s\n"
                      "Change: %s%%" % (eps_cur_year, eps_next_year, chg))
