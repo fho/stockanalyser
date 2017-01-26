@@ -482,7 +482,7 @@ class Levermann(object):
                                                   self.ebit_margin.points)
         s += "{:<35} {:<25} | {} Points\n".format("%s vs. %s Earning growth:" %
                                                   (THIS_YEAR, THIS_YEAR + 1),
-                                                  "%s%%" %
+                                                  "%.2f%%" %
                                                   self.earning_growth.value,
                                                   self.earning_growth.points)
         s += "{:<35} {:<25} | {} Points\n".format("3 month reversal:",
