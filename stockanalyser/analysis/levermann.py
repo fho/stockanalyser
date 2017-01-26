@@ -156,20 +156,27 @@ class Levermann(object):
         # compare quote of stock with the quote of the reference index at the
         # last day of the month
         d = last_weekday_of_month(date)
-        ref_quote = yahoo.stock_quote(self.reference_index, d)
-        quote = yahoo.stock_quote(self.stock.symbol, d)
-
         prev_month_date = last_weekday_of_month(prev_month(date))
+ 
+        quote = yahoo.stock_quote(self.stock.symbol, d)
+        prev_quote = yahoo.stock_quote(self.stock.symbol, prev_month_date)
+        q_diff = ((quote / prev_quote) - 1) * 100
+
+        ref_quote = yahoo.stock_quote(self.reference_index, d)
         prev_ref_quote = yahoo.stock_quote(self.reference_index,
                                                prev_month_date)
-        prev_quote = yahoo.stock_quote(self.stock.symbol, prev_month_date)
+        ref_q_diff = ((ref_quote / prev_ref_quote) - 1) * 100
 
-        ((prev_quote / quote) - 1) * 100
-        ((prev_ref_quote / ref_quote) - 1) * 100
+        logger.debug("Comparing Stock with reference index. "
+                     "(%s vs %s) Stock: %s vs %s = %s%%,"
+                     "Ref. Index.: %s vs %s = %s%%" %
+                     (d, prev_month_date, quote, prev_quote, q_diff,
+                      ref_quote, prev_ref_quote, ref_q_diff))
 
-        return prev_quote - prev_ref_quote
+        return q_diff - ref_q_diff
 
     def eval_three_month_reversal(self):
+        logger.debug("Evaluating 3 month reversal")
         d = prev_month(date.today())
         m1_diff = self._calc_ref_index_comp(d)
 
