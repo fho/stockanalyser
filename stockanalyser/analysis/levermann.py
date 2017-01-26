@@ -127,8 +127,7 @@ class Levermann(object):
         return points
 
     def eval_earning_growth(self):
-        logger.debug("Evaluating past and prognosed"
-                     " earning growth")
+        logger.debug("Evaluating earning growth")
         eps_cur_year = self.stock.eps[THIS_YEAR][-1].value
         eps_next_year = self.stock.eps[THIS_YEAR + 1][-1].value
 
@@ -481,7 +480,7 @@ class Levermann(object):
         s += "{:<35} {:<25} | {} Points\n".format("EBIT Margin:", "%s%%" %
                                                   self.ebit_margin.value,
                                                   self.ebit_margin.points)
-        s += "{:<35} {:<25} | {} Points\n".format("%s vs. %s EPS growth:" %
+        s += "{:<35} {:<25} | {} Points\n".format("%s vs. %s Earning growth:" %
                                                   (THIS_YEAR, THIS_YEAR + 1),
                                                   "%s%%" %
                                                   self.earning_growth.value,
