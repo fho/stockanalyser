@@ -16,7 +16,7 @@ def test_eval_analyst_rating():
     assert l.eval_analyst_rating() == -1
 
     s.analyst_recommendation_rating = 2
-    assert l.eval_analyst_rating() == 0
+    assert l.eval_analyst_rating() == -1
 
     s.analyst_recommendation_rating = 5
     assert l.eval_analyst_rating() == 1

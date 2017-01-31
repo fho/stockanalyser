@@ -331,10 +331,10 @@ class Levermann(object):
 
     def eval_analyst_rating(self):
         BUY_LOWER_BOUND = 1
-        BUY_UPPER_BOUND = 2
-        HOLD_LOWER_BOUND = 2
-        HOLD_UPPER_BOUND = 4
-        SELL_LOWER_BOUND = 4
+        BUY_UPPER_BOUND = 2.5
+        HOLD_LOWER_BOUND = 2.5
+        HOLD_UPPER_BOUND = 3.5
+        SELL_LOWER_BOUND = 3.5
         SELL_UPPER_BOUND = 5
 
         # Leverman uses the analyst rating for large caps stock as contra
