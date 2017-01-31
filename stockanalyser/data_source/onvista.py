@@ -1,10 +1,9 @@
-import urllib.request
-import lxml.etree
 import lxml.html
 import re
 from decimal import Decimal
 from stockanalyser.mymoney import Money
 import logging
+from stockanalyser.data_source import common
 
 
 logger = logging.getLogger(__name__)
@@ -30,13 +29,7 @@ class OnvistaFundamentalScraper(object):
         self.fetch_website()
 
     def fetch_website(self):
-        req = urllib.request.Request(self.url)
-        # Default User-Agent is rejected from the onvista webserver with 404
-        req.add_header('User-Agent', "Bla")
-        logger.debug("Fetching webpage '%s'" % self.url)
-        resp = urllib.request.urlopen(req).read()
-
-        self.etree = lxml.html.fromstring(resp)
+        self.etree = common.url_to_etree(self.url)
 
     def _get_table_header(self, header):
         theader = []
