@@ -23,13 +23,42 @@ def is_number(txt):
 
 class OnvistaScraper(object):
     def __init__(self, url):
-        self.url = url
-        self.etree = None
+        self.overview_url = url
+        self.fundamental_url = self._build_fundamental_url(url)
+        self.fundamental_etree = None
 
-        self.fetch_website()
+        self.fetch_fundamental_webpage()
+        self.fetch_overview_webpage()
 
-    def fetch_website(self):
-        self.etree = common.url_to_etree(self.url)
+    def _build_fundamental_url(self, url):
+        spl = url.split("/")
+        spl.insert(4, "fundamental")
+        return "/".join(spl)
+
+    def fetch_fundamental_webpage(self):
+        self.fundamental_etree = common.url_to_etree(self.fundamental_url)
+
+    def fetch_overview_webpage(self):
+        self.overview_etree = common.url_to_etree(self.overview_url)
+
+    def _get_analyst_rating(self, xpath):
+        res = self.overview_etree.xpath(xpath)
+        v = int(res[0].strip())
+        return v
+
+    def analyst_ratings(self):
+        buy_xpath = ('.//*[@id="AggregatedAnalysesTabAction"]/div/article/'
+                     'div/table/tbody/tr[1]/td[2]/text()')
+        hold_xpath = ('.//*[@id="AggregatedAnalysesTabAction"]/div/article/'
+                      'div/table/tbody/tr[2]/td[2]/text()')
+        sell_xpath = ('.//*[@id="AggregatedAnalysesTabAction"]/div/article/'
+                      'div/table/tbody/tr[3]/td[2]/text()')
+
+        buy = self._get_analyst_rating(buy_xpath)
+        hold = self._get_analyst_rating(hold_xpath)
+        sell = self._get_analyst_rating(sell_xpath)
+
+        return (buy, hold, sell)
 
     def _get_table_header(self, header):
         theader = []
@@ -57,12 +86,12 @@ class OnvistaScraper(object):
 
     def _extract_from_table(self, table_xpath, table_header, row_xpath,
                             row_header, is_money=False):
-        res = self.etree.findall(table_xpath)
+        res = self.fundamental_etree.findall(table_xpath)
         theader = self._get_table_header(res)
         if theader[0] != table_header:
             raise ParsingError("Unexpected table header: '%s'" % theader[0])
 
-        res = self.etree.findall(row_xpath)
+        res = self.fundamental_etree.findall(row_xpath)
         rows = []
         for r in res:
             v = self._normalize_number(r.text)
@@ -132,8 +161,8 @@ class OnvistaScraper(object):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    o = OnvistaScraper("http://www.onvista.de/aktien/"
-                                  "fundamental/Bayer-Aktie-DE000BAY0017")
+    o = OnvistaScraper("http://www.onvista.de/aktien/Bayer-Aktie-DE000BAY0017")
+    print(o.analyst_ratings())
     print("ROE: %s" % o.roe())
     print("EPS: %s" % o.eps())
     print("EBIT-MARGIN: %s" % o.ebit_margin())
