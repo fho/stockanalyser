@@ -8,7 +8,7 @@ from stockanalyser.mymoney import Money
 from stockanalyser.exceptions import InvalidValueError
 from stockanalyser.config import *
 from stockanalyser import fileutils
-from stockanalyser.data_source.onvista import OnvistaFundamentalScraper
+from stockanalyser.data_source.onvista import OnvistaScraper
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ class Stock(object):
         if not self.onvista_fundamental_url:
             raise MissingDataError("onvista_fundamental_url isn't set")
 
-        scr = OnvistaFundamentalScraper(self.onvista_fundamental_url)
+        scr = OnvistaScraper(self.onvista_fundamental_url)
         eps = scr.eps()
         for k, v in eps.items():
             if v is not None:

@@ -21,7 +21,7 @@ def is_number(txt):
         return False
 
 
-class OnvistaFundamentalScraper(object):
+class OnvistaScraper(object):
     def __init__(self, url):
         self.url = url
         self.etree = None
@@ -131,7 +131,8 @@ class OnvistaFundamentalScraper(object):
 
 
 if __name__ == "__main__":
-    o = OnvistaFundamentalScraper("http://www.onvista.de/aktien/"
+    logging.basicConfig(level=logging.DEBUG)
+    o = OnvistaScraper("http://www.onvista.de/aktien/"
                                   "fundamental/Bayer-Aktie-DE000BAY0017")
     print("ROE: %s" % o.roe())
     print("EPS: %s" % o.eps())
