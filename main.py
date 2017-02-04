@@ -22,11 +22,6 @@ def set_leverman_values(stock):
     stock.onvista_fundamental_url = url
     stock.fetch_onvista_data()
 
-    val = input.query_input("Analyst Recommendation Rating (from"
-                            " https://finance.yahoo.com/quote/<SYMBOL>/analysts?p=<SYMBOL>)",
-                            input.QueryType.YAHOO_ANALYST_RATING)
-    stock.analyst_recommendation_rating = val
-
     val = input.query_input("Date of last quarterly figures release",
                             input.QueryType.DATE)
     stock.last_quarterly_figures_date = val
