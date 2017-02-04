@@ -53,7 +53,7 @@ class Stock(object):
         self.equity_ratio = {}
         self.eps = {}
         self.last_quarterly_figures_date = None
-        self._analyst_recommendation_rating = None
+        self.analyst_ratings = None
         self.onvista_fundamental_url = None
 
         self.update_stock_info()
@@ -83,18 +83,8 @@ class Stock(object):
             if v is not None:
                 self.set_roe(k, v)
 
-    @property
-    def analyst_recommendation_rating(self):
-        return self._analyst_recommendation_rating
-
-    @analyst_recommendation_rating.setter
-    def analyst_recommendation_rating(self, val):
-        if val < 1 or val > 5:
-            raise InvalidValueError("Analyst Rating value has to be >=1,<=5."
-                                    " Get the \"Recommended Rating\" Value"
-                                    " from "
-                                    "https://finance.yahoo.com/quote/SYMBOL>/analysts?p=<SYMBOL>")
-        self._analyst_recommendation_rating = val
+        rating = scr.analyst_ratings()
+        self.analyst_ratings = scr.analyst_ratings()
 
     def update_stock_info(self):
         data = yahoo.get_stock_info(self.symbol)
