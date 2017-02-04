@@ -17,7 +17,7 @@ def set_leverman_values(stock):
     cur_year = datetime.date.today().year
     last_year = cur_year - 1
 
-    url = input.query_input("URL to onvista.de fundamental page for the stock",
+    url = input.query_input("URL of onvista.de stock page",
                             input.QueryType.URL)
     stock.onvista_fundamental_url = url
     stock.fetch_onvista_data()
