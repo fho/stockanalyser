@@ -157,7 +157,7 @@ class Levermann(object):
         # last day of the month
         d = last_weekday_of_month(date)
         prev_month_date = last_weekday_of_month(prev_month(date))
- 
+
         quote = yahoo.stock_quote(self.stock.symbol, d)
         prev_quote = yahoo.stock_quote(self.stock.symbol, prev_month_date)
         q_diff = ((quote / prev_quote) - 1) * 100
@@ -330,30 +330,22 @@ class Levermann(object):
         return points
 
     def eval_analyst_rating(self):
-        BUY_LOWER_BOUND = 1
-        BUY_UPPER_BOUND = 2.5
-        HOLD_LOWER_BOUND = 2.5
-        HOLD_UPPER_BOUND = 3.5
-        SELL_LOWER_BOUND = 3.5
-        SELL_UPPER_BOUND = 5
+        if self.stock.analyst_ratings is None:
+            logger.debug("No analyst rating available")
+            return 0
 
-        # Leverman uses the analyst rating for large caps stock as contra
-        # indicator, therefore we inverse their recommendation
+        ratings = self.stock.analyst_ratings
+        logger.debug("Analyst ratings: %s" % str(ratings))
+        score = ((ratings[0] * 1) + (ratings[1] * 2) + (ratings[2] * 3) /
+                 (float(ratings[0]) + ratings[1] + ratings[2]))
 
-        r = self.stock.analyst_recommendation_rating
-
-        if r is None or (r >= HOLD_LOWER_BOUND and r < HOLD_UPPER_BOUND):
-            points = 0
-        elif r >= BUY_LOWER_BOUND and r < BUY_UPPER_BOUND:
-            points = -1
-        elif r >= SELL_LOWER_BOUND and r <= SELL_UPPER_BOUND:
-            points = 1
-        else:
-            raise InvalidValueError("Invalid rating value: '%s'" % r)
-
-        self.analyst_rating = CriteriaRating(r, points)
-
-        return points
+        logger.debug("Analyst score: %s" % score)
+        if score >= 1 and score <= 1.5:
+            return -1
+        if score > 1.5 and score < 2.5:
+            return 0
+        if score >= 2.5:
+            return 1
 
     def eval_five_years_price_earnings_ratio(self):
         per = self.stock.price_earnings_ratio_5year().amount
