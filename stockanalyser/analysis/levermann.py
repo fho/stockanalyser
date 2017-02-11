@@ -306,9 +306,12 @@ class Levermann(object):
 
         rel_qf_reaction = qf_reaction - ref_index_chg
 
-        logger.debug("Stock reaction to quarterly figure release: %s%%,"
-                     "%s change on quarterly figures release date: %s%%"
-                     % (qf_reaction, self.reference_index, ref_index_chg))
+        logger.debug("Quarterly figure reaction %s vs %s: "
+                     "%s: %s vs %s => %s, %s: %s vs %s => %s," %
+                     (qf_date, qf_prev_day, self.stock.symbol, qf_day_quote,
+                      qf_previous_day_quote, qf_reaction, self.reference_index,
+                      ref_index_quote, ref_previous_index_quote,
+                      ref_index_chg))
 
         if rel_qf_reaction >= -1 and rel_qf_reaction < 1:
             logger.debug("Relative Stock reaction to quarterly figure release"
