@@ -61,11 +61,21 @@ class OnvistaScraper(object):
         return (buy, hold, sell)
 
     def _get_table_header(self, header):
+        # onvista uses 2 different presentation for the year:
+        # "18/19e   17/18e  16/17e  15/16" and
+        # "2019e    2018e   2017e   2016e"
         theader = []
         for r in header:
             v = r.text.lower().strip()
             if not len(v):
                 continue
+
+            # handle presentation of years as
+            # "18/19e   17/18e  16/17e  15/16", convert them to the
+            # YYYY (eg 2018) format
+            if "/" in v:
+                v = "20" + v.split("/")[1]
+
             # remove the "e" for estimated from year endings
             if re.match("\d+e", v):
                 v = int(v[:-1])
