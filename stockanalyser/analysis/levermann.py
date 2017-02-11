@@ -336,16 +336,20 @@ class Levermann(object):
 
         ratings = self.stock.analyst_ratings
         logger.debug("Analyst ratings: %s" % str(ratings))
-        score = ((ratings[0] * 1) + (ratings[1] * 2) + (ratings[2] * 3) /
+        score = (((ratings[0] * 1) + (ratings[1] * 2) + (ratings[2] * 3)) /
                  (float(ratings[0]) + ratings[1] + ratings[2]))
 
         logger.debug("Analyst score: %s" % score)
+
         if score >= 1 and score <= 1.5:
-            return -1
+            points = -1
         if score > 1.5 and score < 2.5:
-            return 0
+            points = 0
         if score >= 2.5:
-            return 1
+            points = 1
+
+        self.analyst_rating = CriteriaRating(score, points)
+        return points
 
     def eval_five_years_price_earnings_ratio(self):
         per = self.stock.price_earnings_ratio_5year().amount
