@@ -72,6 +72,67 @@ class LevermannResult(object):
         self.price_earnings_ratio = None
         self._score = None
 
+    def __str__(self):
+        s = "{:<35} {:<25}\n".format("Last Evaluation Date:", "%s" %
+                                     self.timestamp)
+        s += "\n"
+        s += "{:<35} {:<25} | {} Points\n".format("RoE:",
+                                                  "%s%%" % self.roe.value,
+                                                  self.roe.points)
+        s += "{:<35} {:<25} | {} Points\n".format("Equity Ratio:", "%s%%" %
+                                                  self.equity_ratio.value,
+                                                  self.equity_ratio.points)
+        s += "{:<35} {:<25} | {} Points\n".format("EBIT Margin:", "%s%%" %
+                                                  self.ebit_margin.value,
+                                                  self.ebit_margin.points)
+        s += "{:<35} {:<25} | {} Points\n".format("%s vs. %s Earning growth:" %
+                                                  (THIS_YEAR, THIS_YEAR + 1),
+                                                  "%.2f%%" %
+                                                  self.earning_growth.value,
+                                                  self.earning_growth.points)
+        s += "{:<35} {:<25} | {} Points\n".format("3 month reversal:",
+                                                  "%.2f%%, %.2f%%, %.2f%%" %
+                                                  self.three_month_reversal.value[::-1],
+                                                  self.three_month_reversal.points)
+        s += "{:<35} {:<25} | {} Points\n".format("Stock momentum (6m,"
+                                                  "1y chg points):",
+                                                  "%s Points, %s Points" %
+                                                  self.momentum.value,
+                                                  self.momentum.points)
+        s += "{:<35} {:<25} | {} Points\n".format("6 month quote movement:",
+                                                  "%.2f%%" %
+                                                  self.quote_chg_6month.value,
+                                                  self.quote_chg_6month.points)
+        s += "{:<35} {:<25} | {} Points\n".format("1 year quote movement:",
+                                                  "%.2f%%" %
+                                                  self.quote_chg_1year.value,
+                                                  self.quote_chg_1year.points)
+        s += "{:<35} {:<25} | {} Points\n".format("Earning revision "
+                                                  "(6m, 1y points):",
+                                                  "%s Points, %s Points" %
+                                                  self.earning_revision.value,
+                                                  self.earning_revision.points)
+        s += "{:<35} {:<25} | {} Points\n".format("Quarterly figures release"
+                                                  " reaction:",
+                                                  "%.2g%%" %
+                                                  self.quarterly_figures_reaction.value,
+                                                  self.quarterly_figures_reaction.points)
+        s += "{:<35} {:<25} | {} Points\n".format("Yahoo analyst rating",
+                                                  self.analyst_rating.value,
+                                                  self.analyst_rating.points)
+        s += "{:<35} {:<25.2f} | {} Points\n".format("Price earnings ratio",
+                                                     self.price_earnings_ratio.value,
+                                                     self.price_earnings_ratio.points)
+        s += "{:<35} {:<25.2f} | {} Points\n".format("5y price earnings ratio",
+                                                     self.five_years_price_earnings_ratio.value,
+                                                     self.five_years_price_earnings_ratio.points)
+        s += "\n"
+
+        s += "{:<35} {:<25} | {} Points\n".format("Total Levermann Score:",
+                                                  "", self.score)
+
+        return s
+
     @property
     def score(self):
         if self._score is None:
@@ -132,6 +193,7 @@ class Levermann(object):
         self.reference_index = "^GDAXI"
 
     def evaluate(self):
+        logger.info("Creating Levermann Analysis for %s" % self.stock.symbol)
         result = LevermannResult()
 
         result.roe = self.eval_roe()
@@ -153,9 +215,19 @@ class Levermann(object):
         result.earning_growth = self.eval_earning_growth()
         result.earning_revision = self.eval_earning_revision()
 
-        self.evaluation_results.append(result)
+        if self.evaluation_results:
+            last = self.evaluation_results[-1]
+            if ((last.timestamp > (datetime.datetime.now() -
+                 datetime.timedelta(days=7))) and last.score == result.score):
+                logger.debug("Old Levermann analysis:\n%s\n"
+                             "New Levermann anylsis: \n%s" %
+                             (str(last), str(result)))
+                logger.info("Previous Levermann analysis is younger than 1"
+                            " week and Levermann score hasn't changed.\n"
+                            "New analysis data is not stored.")
+                return result.score
 
-        print("Score: %s" % result.score)
+        self.evaluation_results.append(result)
 
         return result.score
 
@@ -498,61 +570,5 @@ class Levermann(object):
         r = self.evaluation_results[-1]
 
         s = str(self.stock)
-        s += "{:<35} {:<25}\n".format("Last Evaluation Date:",
-                                      "%s" % r.timestamp)
-        s += "\n"
-        s += "{:<35} {:<25} | {} Points\n".format("RoE:",
-                                                  "%s%%" % r.roe.value,
-                                                  r.roe.points)
-        s += "{:<35} {:<25} | {} Points\n".format("Equity Ratio:", "%s%%" %
-                                                  r.equity_ratio.value,
-                                                  r.equity_ratio.points)
-        s += "{:<35} {:<25} | {} Points\n".format("EBIT Margin:", "%s%%" %
-                                                  r.ebit_margin.value,
-                                                  r.ebit_margin.points)
-        s += "{:<35} {:<25} | {} Points\n".format("%s vs. %s Earning growth:" %
-                                                  (THIS_YEAR, THIS_YEAR + 1),
-                                                  "%.2f%%" %
-                                                  r.earning_growth.value,
-                                                  r.earning_growth.points)
-        s += "{:<35} {:<25} | {} Points\n".format("3 month reversal:",
-                                                  "%.2f%%, %.2f%%, %.2f%%" %
-                                                  r.three_month_reversal.value[::-1],
-                                                  r.three_month_reversal.points)
-        s += "{:<35} {:<25} | {} Points\n".format("Stock momentum (6m,"
-                                                  "1y chg points):",
-                                                  "%s Points, %s Points" %
-                                                  r.momentum.value,
-                                                  r.momentum.points)
-        s += "{:<35} {:<25} | {} Points\n".format("6 month quote movement:",
-                                                  "%.2f%%" %
-                                                  r.quote_chg_6month.value,
-                                                  r.quote_chg_6month.points)
-        s += "{:<35} {:<25} | {} Points\n".format("1 year quote movement:",
-                                                  "%.2f%%" %
-                                                  r.quote_chg_1year.value,
-                                                  r.quote_chg_1year.points)
-        s += "{:<35} {:<25} | {} Points\n".format("Earning revision "
-                                                  "(6m, 1y points):",
-                                                  "%s Points, %s Points" %
-                                                  r.earning_revision.value,
-                                                  r.earning_revision.points)
-        s += "{:<35} {:<25} | {} Points\n".format("Quarterly figures release"
-                                                  " reaction:",
-                                                  "%.2g%%" %
-                                                  r.quarterly_figures_reaction.value,
-                                                  r.quarterly_figures_reaction.points)
-        s += "{:<35} {:<25} | {} Points\n".format("Yahoo analyst rating",
-                                                  r.analyst_rating.value,
-                                                  r.analyst_rating.points)
-        s += "{:<35} {:<25.2f} | {} Points\n".format("Price earnings ratio",
-                                                     r.price_earnings_ratio.value,
-                                                     r.price_earnings_ratio.points)
-        s += "{:<35} {:<25.2f} | {} Points\n".format("5y price earnings ratio",
-                                                     r.five_years_price_earnings_ratio.value,
-                                                     r.five_years_price_earnings_ratio.points)
-        s += "\n"
-
-        s += "{:<35} {:<25} | {} Points\n".format("Total Levermann Score:",
-                                                  "", r.score)
+        s += str(r)
         return s
