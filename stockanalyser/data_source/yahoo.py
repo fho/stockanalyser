@@ -3,6 +3,7 @@ import urllib.parse
 import logging
 import json
 import datetime
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +18,25 @@ YQL_BASE_URL = "http://query.yahooapis.com/v1/public/yql?"
 def get_yql_result(params):
     params = urllib.parse.urlencode(params)
     url = YQL_BASE_URL + params
-    logger.debug("Fetching Yahoo stock data from '%s'" % url)
 
-    req = urllib.request.Request(url)
-    resp = urllib.request.urlopen(req).read()
+    tries = 0
+    wait_sec = 2
+    resp = None
+    while resp is None:
+        req = urllib.request.Request(url)
+        try:
+            logger.debug("Fetching Yahoo stock data from '%s'" % url)
+            resp = urllib.request.urlopen(req).read()
+            tries += 1
+
+        except urllib.error.HTTPError as e:
+            resp = None
+            if tries < 1:
+                logger.error("Fetching yahoo YQL Stock Data failed, retrying"
+                             " in %s seconds..." % wait_sec)
+                time.sleep(wait_sec)
+            else:
+                raise e
 
     logger.debug("Got Yahoo stock data response: '%s'" % resp)
     res = json.loads(resp)
