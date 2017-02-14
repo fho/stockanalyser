@@ -46,7 +46,7 @@ def configure_logger(debug):
     else:
         level = logging.INFO
 
-    logging.basicConfig(level=level)
+    logging.getLogger().setLevel(level)
 
 
 def unpickle_levermann_objs():
