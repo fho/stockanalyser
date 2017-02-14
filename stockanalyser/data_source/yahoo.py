@@ -22,6 +22,7 @@ def get_yql_result(params):
     tries = 0
     wait_sec = 2
     resp = None
+
     while resp is None:
         req = urllib.request.Request(url)
         try:
@@ -29,7 +30,20 @@ def get_yql_result(params):
             resp = urllib.request.urlopen(req).read()
             tries += 1
 
-        except urllib.error.HTTPError as e:
+            logger.debug("Got Yahoo stock data response: '%s'" % resp)
+            res = json.loads(resp)
+            if (int(res["query"]["count"]) == 0 or
+                ("Name" in res["query"]["results"]["quote"] and
+                 not res["query"]["results"]["quote"]["Name"])):
+                raise EmptyStockDataResponse("Stock data from Yahoo doesn't"
+                                             " contain values. Invalid Stock"
+                                             " Symbol? For non US-Stocks a"
+                                             " country prefix has to be added"
+                                             " to the stock symbol. Received"
+                                             " Response: '%s'" % res)
+            return res["query"]["results"]["quote"]
+
+        except (urllib.error.HTTPError, EmptyStockDataResponse) as e:
             resp = None
             if tries < 1:
                 logger.error("Fetching yahoo YQL Stock Data failed, retrying"
@@ -37,19 +51,6 @@ def get_yql_result(params):
                 time.sleep(wait_sec)
             else:
                 raise e
-
-    logger.debug("Got Yahoo stock data response: '%s'" % resp)
-    res = json.loads(resp)
-    print(res["query"]["results"])
-    if (int(res["query"]["count"]) == 0 or
-        ("Name" in res["query"]["results"]["quote"] and
-         not res["query"]["results"]["quote"]["Name"])):
-        raise EmptyStockDataResponse("Stock data from Yahoo doesn't contain"
-                                     " values. Invalid Stock Symbol? For non"
-                                     " US-Stocks a country prefix has to be"
-                                     " added to the stock symbol."
-                                     " Received Response:" " '%s'" % res)
-    return res["query"]["results"]["quote"]
 
 
 def stock_quote(symbol, date):
@@ -80,5 +81,5 @@ def get_stock_info(symbol):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     r = stock_quote("VOW.DE", (datetime.datetime.now() -
-                                   datetime.timedelta(days=1)).date())
+                               datetime.timedelta(days=1)).date())
     print(r)
