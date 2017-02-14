@@ -138,7 +138,7 @@ class Levermann(object):
         result.ebit_margin = self.eval_ebit_margin()
         result.equity_ratio = self.eval_equity_ratio()
         result.price_earnings_ratio = self.eval_price_earnings_ratio()
-        result.five_years_price_earnings_ratio += \
+        result.five_years_price_earnings_ratio = \
             self.eval_five_years_price_earnings_ratio()
         result.analyst_rating = self.eval_analyst_rating()
         result.quarterly_figures_reaction = \
