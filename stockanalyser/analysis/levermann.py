@@ -475,6 +475,22 @@ class Levermann(object):
         with open(path, "wb") as f:
             pickle.dump(self, f)
 
+    def short_summary_header(self):
+        s = "| {:<48} | {:<5} | {:<17} |".format("Name", "Score",
+                                                 "Evaluation Date")
+        s += "\n"
+        s += "-" * 80
+        return s
+
+    def short_summary(self):
+        r = self.evaluation_results[-1]
+        ts = r.timestamp.strftime("%x %X")
+
+        s = "| {:<48} | {:<5} | {:<17} |".format(self.stock.name, r.score,
+                                                 (ts))
+
+        return s
+
     def __str__(self):
         if not self.evaluation_results:
             return "No Analysis exist"
