@@ -2,6 +2,7 @@ import logging
 import calendar
 import pickle
 from datetime import date, timedelta
+import datetime
 from stockanalyser.data_source import yahoo
 from stockanalyser.exceptions import NotSupportedError, InvalidValueError
 from stockanalyser.config import *
@@ -52,28 +53,10 @@ class CriteriaRating(object):
         self.points = points
 
 
-def levermann_pickle_path(symbol, dir=DATA_PATH):
-        filename = fileutils.to_pickle_filename(symbol + ".levermann")
-        path = os.path.join(dir, filename)
-        return path
+class LevermannResult(object):
+    def __init__(self):
+        self.timestamp = datetime.datetime.now()
 
-
-def unpickle_levermann(symbol, dir=DATA_PATH):
-        path = levermann_pickle_path(symbol)
-        return pickle.load(open(path, "rb"))
-
-
-class EvaluationResult(object):
-    def __init__(self, points, eval_date):
-        self.points = points
-        self.date = eval_date
-
-
-class Levermann(object):
-    def __init__(self, stock):
-        self.stock = stock
-
-        self.evaluation_result = []
         self.roe = None
         self.equity_ratio = None
         self.ebit_margin = None
@@ -87,6 +70,54 @@ class Levermann(object):
         self.analyst_rating = None
         self.five_years_price_earnings_ratio = None
         self.price_earnings_ratio = None
+        self._score = None
+
+    @property
+    def score(self):
+        if self._score is None:
+            self._score = (self.roe.points + self.equity_ratio.points +
+                           self.ebit_margin.points +
+                           self.earning_growth.points +
+                           self.three_month_reversal.points +
+                           self.momentum.points +
+                           self.quote_chg_6month.points +
+                           self.quote_chg_1year.points +
+                           self.earning_revision.points +
+                           self.quarterly_figures_reaction.points +
+                           self.analyst_rating.points +
+                           self.five_years_price_earnings_ratio.points +
+                           self.price_earnings_ratio.points)
+        return self._score
+
+
+def levermann_pickle_path(symbol, dir=DATA_PATH):
+        filename = fileutils.to_pickle_filename(symbol + ".levermann")
+        path = os.path.join(dir, filename)
+        return path
+
+
+def unpickle_levermann_sym(symbol, dir=DATA_PATH):
+        path = levermann_pickle_path(symbol)
+        return unpickle_levermann(path)
+
+
+def unpickle_levermann(path):
+        l = pickle.load(open(path, "rb"))
+        logger.debug("Unpickled Levermann Analysis for Stock: %s from '%s'" %
+                     (l.stock.symbol, path))
+        return l
+
+
+class EvaluationResult(object):
+    def __init__(self, points, eval_date):
+        self.points = points
+        self.date = eval_date
+
+
+class Levermann(object):
+    def __init__(self, stock):
+        self.stock = stock
+        self.evaluation_results = []
 
         if ".de" not in self.stock.symbol.lower():
             raise NotSupportedError("Only DAX Stocks are supported."
@@ -101,30 +132,32 @@ class Levermann(object):
         self.reference_index = "^GDAXI"
 
     def evaluate(self):
-        points = 0
-        points += self.eval_roe()
-        points += self.eval_ebit_margin()
-        points += self.eval_equity_ratio()
-        points += self.eval_price_earnings_ratio()
-        points += self.eval_five_years_price_earnings_ratio()
+        result = LevermannResult()
 
-        points += self.eval_analyst_rating()
-        points += self.eval_quarterly_figures_reaction()
-        points_6month_chg = self.eval_quote_chg_6month()
-        points_1year_chg = self.eval_quote_chg_1year()
-        points += points_6month_chg
-        points += points_1year_chg
+        result.roe = self.eval_roe()
+        result.ebit_margin = self.eval_ebit_margin()
+        result.equity_ratio = self.eval_equity_ratio()
+        result.price_earnings_ratio = self.eval_price_earnings_ratio()
+        result.five_years_price_earnings_ratio += \
+            self.eval_five_years_price_earnings_ratio()
+        result.analyst_rating = self.eval_analyst_rating()
+        result.quarterly_figures_reaction = \
+            self.eval_quarterly_figures_reaction()
 
-        points += self.eval_momentum(points_6month_chg, points_1year_chg)
-        points += self.eval_three_month_reversal()
-        points += self.eval_earning_growth()
-        points += self.eval_earning_revision()
+        result.quote_chg_6month = self.eval_quote_chg_6month()
+        result.quote_chg_1year = self.eval_quote_chg_1year()
+        result.momentum = self.eval_momentum(result.quote_chg_6month.points,
+                                             result.quote_chg_1year.points)
 
-        self.evaluation_result.append(EvaluationResult(points, date.today()))
+        result.three_month_reversal = self.eval_three_month_reversal()
+        result.earning_growth = self.eval_earning_growth()
+        result.earning_revision = self.eval_earning_revision()
 
-        print("Points: %s" % points)
+        self.evaluation_results.append(result)
 
-        return points
+        print("Score: %s" % result.score)
+
+        return result.score
 
     def eval_earning_growth(self):
         logger.debug("Evaluating earning growth")
@@ -148,9 +181,7 @@ class Levermann(object):
                          " year => -1 Points")
             points = -1
 
-        self.earning_growth = CriteriaRating(chg, points)
-
-        return points
+        return CriteriaRating(chg, points)
 
     def _calc_ref_index_comp(self, date):
         # compare quote of stock with the quote of the reference index at the
@@ -164,7 +195,7 @@ class Levermann(object):
 
         ref_quote = yahoo.stock_quote(self.reference_index, d)
         prev_ref_quote = yahoo.stock_quote(self.reference_index,
-                                               prev_month_date)
+                                           prev_month_date)
         ref_q_diff = ((ref_quote / prev_ref_quote) - 1) * 100
 
         logger.debug("Comparing Stock with reference index. "
@@ -193,10 +224,7 @@ class Levermann(object):
         else:
             points = 0
 
-        self.three_month_reversal = CriteriaRating((m1_diff, m2_diff, m3_diff),
-                                                   points)
-
-        return points
+        return CriteriaRating((m1_diff, m2_diff, m3_diff), points)
 
     def eval_momentum(self, points_6month_chg, points_1year_chg):
         if points_6month_chg == 1 and (points_1year_chg <= 0):
@@ -206,9 +234,7 @@ class Levermann(object):
         else:
             points = 0
 
-        self.momentum = CriteriaRating((points_6month_chg, points_1year_chg),
-                                       points)
-        return points
+        return CriteriaRating((points_6month_chg, points_1year_chg), points)
 
     def _calc_quite_chg_points(self, chg):
         if chg >= -5 and chg <= 5:
@@ -228,16 +254,12 @@ class Levermann(object):
     def eval_quote_chg_6month(self):
         chg, points = self._eval_quote_chg_daydiff(182)
 
-        self.quote_chg_6month = CriteriaRating(chg, points)
-
-        return points
+        return CriteriaRating(chg, points)
 
     def eval_quote_chg_1year(self):
         chg, points = self._eval_quote_chg_daydiff(365)
 
-        self.quote_chg_1year = CriteriaRating(chg, points)
-
-        return points
+        return CriteriaRating(chg, points)
 
     def _calc_eps_chg(self, eps_list):
         assert len(eps_list) > 2
@@ -264,8 +286,7 @@ class Levermann(object):
         next_year_eps = self.stock.eps[THIS_YEAR + 1]
 
         if len(cur_year_eps) < 2 or len(next_year_eps) < 2:
-            self.earning_revision = CriteriaRating((None, None), 0)
-            return 0
+            return CriteriaRating((None, None), 0)
 
         cur_year_chg = self._calc_eps_chg(cur_year_eps)
         next_year_chg = self._calc_eps_chg(next_year_eps)
@@ -282,10 +303,7 @@ class Levermann(object):
         elif psum <= -1:
             points = -1
 
-        self.earning_revision = CriteriaRating((cur_year_points,
-                                                next_year_points), points)
-
-        return points
+        return CriteriaRating((cur_year_points, next_year_points), points)
 
     def eval_quarterly_figures_reaction(self):
         logger.debug("Evaluating stock reaction on"
@@ -294,13 +312,13 @@ class Levermann(object):
         qf_prev_day = prev_weekday(self.stock.last_quarterly_figures_date)
 
         qf_previous_day_quote = yahoo.stock_quote(self.stock.symbol,
-                                                      qf_prev_day)
+                                                  qf_prev_day)
         qf_day_quote = yahoo.stock_quote(self.stock.symbol, qf_date)
         qf_reaction = ((qf_day_quote / qf_previous_day_quote) - 1) * 100
 
         ref_index_quote = yahoo.stock_quote(self.reference_index, qf_date)
         ref_previous_index_quote = yahoo.stock_quote(self.reference_index,
-                                                         qf_prev_day)
+                                                     qf_prev_day)
         ref_index_chg = (((ref_index_quote / ref_previous_index_quote) - 1) *
                          100)
 
@@ -327,10 +345,7 @@ class Levermann(object):
                          " is %s%%" ", <-1%% => -1 Points" % rel_qf_reaction)
             points = -1
 
-        self.quarterly_figures_reaction = CriteriaRating(rel_qf_reaction,
-                                                         points)
-
-        return points
+        return CriteriaRating(rel_qf_reaction, points)
 
     def eval_analyst_rating(self):
         if self.stock.analyst_ratings is None:
@@ -351,8 +366,7 @@ class Levermann(object):
         if score >= 2.5:
             points = 1
 
-        self.analyst_rating = CriteriaRating(score, points)
-        return points
+        return CriteriaRating(score, points)
 
     def eval_five_years_price_earnings_ratio(self):
         per = self.stock.price_earnings_ratio_5year().amount
@@ -368,9 +382,7 @@ class Levermann(object):
             logger.debug("5 year PER >16: -1 Points")
             points = -1
 
-        self.five_years_price_earnings_ratio = CriteriaRating(per, points)
-
-        return points
+        return CriteriaRating(per, points)
 
     def eval_price_earnings_ratio(self):
         per = self.stock.price_earnings_ratio().amount
@@ -386,9 +398,7 @@ class Levermann(object):
             logger.debug("PER >16: -1 Points")
             points = -1
 
-        self.price_earnings_ratio = CriteriaRating(per, points)
-
-        return points
+        return CriteriaRating(per, points)
 
     def eval_roe(self):
         year = LAST_YEAR
@@ -410,8 +420,7 @@ class Levermann(object):
             logger.debug("ROE >20%: 1 Point")
             points = 1
 
-        self.roe = CriteriaRating(roe, points)
-        return points
+        return CriteriaRating(roe, points)
 
     def eval_equity_ratio(self):
         last_year = LAST_YEAR
@@ -436,9 +445,7 @@ class Levermann(object):
             logger.debug("Equity Ratio >25%: 1 Point")
             points = 1
 
-        self.equity_ratio = CriteriaRating(equity_ratio, points)
-
-        return points
+        return CriteriaRating(equity_ratio, points)
 
     def eval_ebit_margin(self):
         last_year = LAST_YEAR
@@ -461,9 +468,7 @@ class Levermann(object):
             logger.debug("EBIT-Margin >12%: 1 Points")
             points = 1
 
-        self.ebit_margin = CriteriaRating(ebit_margin, points)
-
-        return points
+        return CriteriaRating(ebit_margin, points)
 
     def save(self, dir=DATA_PATH):
         path = levermann_pickle_path(self.stock.symbol, dir)
@@ -471,65 +476,67 @@ class Levermann(object):
             pickle.dump(self, f)
 
     def __str__(self):
-        eval_result = self.evaluation_result[-1]
+        if not self.evaluation_results:
+            return "No Analysis exist"
+
+        r = self.evaluation_results[-1]
 
         s = str(self.stock)
         s += "{:<35} {:<25}\n".format("Last Evaluation Date:",
-                                      "%s" % eval_result.date)
+                                      "%s" % r.timestamp)
         s += "\n"
         s += "{:<35} {:<25} | {} Points\n".format("RoE:",
-                                                  "%s%%" % self.roe.value,
-                                                  self.roe.points)
+                                                  "%s%%" % r.roe.value,
+                                                  r.roe.points)
         s += "{:<35} {:<25} | {} Points\n".format("Equity Ratio:", "%s%%" %
-                                                  self.equity_ratio.value,
-                                                  self.equity_ratio.points)
+                                                  r.equity_ratio.value,
+                                                  r.equity_ratio.points)
         s += "{:<35} {:<25} | {} Points\n".format("EBIT Margin:", "%s%%" %
-                                                  self.ebit_margin.value,
-                                                  self.ebit_margin.points)
+                                                  r.ebit_margin.value,
+                                                  r.ebit_margin.points)
         s += "{:<35} {:<25} | {} Points\n".format("%s vs. %s Earning growth:" %
                                                   (THIS_YEAR, THIS_YEAR + 1),
                                                   "%.2f%%" %
-                                                  self.earning_growth.value,
-                                                  self.earning_growth.points)
+                                                  r.earning_growth.value,
+                                                  r.earning_growth.points)
         s += "{:<35} {:<25} | {} Points\n".format("3 month reversal:",
                                                   "%.2f%%, %.2f%%, %.2f%%" %
-                                                  self.three_month_reversal.value[::-1],
-                                                  self.three_month_reversal.points)
+                                                  r.three_month_reversal.value[::-1],
+                                                  r.three_month_reversal.points)
         s += "{:<35} {:<25} | {} Points\n".format("Stock momentum (6m,"
                                                   "1y chg points):",
                                                   "%s Points, %s Points" %
-                                                  self.momentum.value,
-                                                  self.momentum.points)
+                                                  r.momentum.value,
+                                                  r.momentum.points)
         s += "{:<35} {:<25} | {} Points\n".format("6 month quote movement:",
                                                   "%.2f%%" %
-                                                  self.quote_chg_6month.value,
-                                                  self.quote_chg_6month.points)
+                                                  r.quote_chg_6month.value,
+                                                  r.quote_chg_6month.points)
         s += "{:<35} {:<25} | {} Points\n".format("1 year quote movement:",
                                                   "%.2f%%" %
-                                                  self.quote_chg_1year.value,
-                                                  self.quote_chg_1year.points)
+                                                  r.quote_chg_1year.value,
+                                                  r.quote_chg_1year.points)
         s += "{:<35} {:<25} | {} Points\n".format("Earning revision "
                                                   "(6m, 1y points):",
                                                   "%s Points, %s Points" %
-                                                  self.earning_revision.value,
-                                                  self.earning_revision.points)
+                                                  r.earning_revision.value,
+                                                  r.earning_revision.points)
         s += "{:<35} {:<25} | {} Points\n".format("Quarterly figures release"
                                                   " reaction:",
                                                   "%.2g%%" %
-                                                  self.quarterly_figures_reaction.value,
-                                                  self.quarterly_figures_reaction.points)
+                                                  r.quarterly_figures_reaction.value,
+                                                  r.quarterly_figures_reaction.points)
         s += "{:<35} {:<25} | {} Points\n".format("Yahoo analyst rating",
-                                                  self.analyst_rating.value,
-                                                  self.analyst_rating.points)
+                                                  r.analyst_rating.value,
+                                                  r.analyst_rating.points)
         s += "{:<35} {:<25.2f} | {} Points\n".format("Price earnings ratio",
-                                                     self.price_earnings_ratio.value,
-                                                     self.price_earnings_ratio.points)
+                                                     r.price_earnings_ratio.value,
+                                                     r.price_earnings_ratio.points)
         s += "{:<35} {:<25.2f} | {} Points\n".format("5y price earnings ratio",
-                                                     self.five_years_price_earnings_ratio.value,
-                                                     self.five_years_price_earnings_ratio.points)
+                                                     r.five_years_price_earnings_ratio.value,
+                                                     r.five_years_price_earnings_ratio.points)
         s += "\n"
 
-        s += "{:<35} {:<25} | {} Points\n".format("Total Levermann Points:",
-                                                  "",
-                                                  eval_result.points)
+        s += "{:<35} {:<25} | {} Points\n".format("Total Levermann Score:",
+                                                  "", r.score)
         return s
