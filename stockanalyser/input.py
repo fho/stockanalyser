@@ -19,12 +19,12 @@ def query_input(value_name, val_type):
     while True:
         try:
             if val_type == QueryType.PERCENT:
-                v = input("Please enter %s: " % value_name)
+                v = input("> Please enter %s: " % value_name)
                 v = float(v)
                 validate_percent_value(v)
                 return v
             elif val_type == QueryType.CURRENCY:
-                v = input("Please enter %s (Format:"
+                v = input("> Please enter %s (Format:"
                           " VALUE 3-LETTER-CURRENCY-SYMBOL): " % value_name)
                 v = v.split()
                 if len(v) != 2:
@@ -33,20 +33,20 @@ def query_input(value_name, val_type):
                 m = Money(float(v[0]), v[1].upper())
                 return m
             elif val_type == QueryType.DATE:
-                v = input("Please enter %s (Format: DD.MM.YYYY): " %
+                v = input("> Please enter %s (Format: DD.MM.YYYY): " %
                           value_name)
                 struct = time.strptime(v, "%d.%m.%Y")
                 d = datetime.fromtimestamp(time.mktime(struct))
                 return d
             elif val_type == QueryType.YAHOO_ANALYST_RATING:
-                v = float(input("Please enter %s: " % value_name))
+                v = float(input("> Please enter %s: " % value_name))
                 if v >= 1 and v <= 5:
                     return v
             elif val_type == QueryType.STOCK_SYMBOL:
-                v = input("Please enter %s: " % value_name)
+                v = input("> Please enter %s: " % value_name)
                 return v
             elif val_type == QueryType.URL:
-                v = input("Please enter %s: " % value_name)
+                v = input("> Please enter %s: " % value_name)
                 return v
 
         except (ValueError, InvalidValueError) as e:
