@@ -6,8 +6,23 @@ Features
 - save old stock ratings
 
 
-
 # TODO: 
+- change argparse to use subcommand e.g:
+  "./stockananalyser add [-d <SYM> <URL>]"
+  "./stockananalyser show [-v -d]"
+- add a refresh function to CLI, recalculates the score of a saved stock and ask
+  for the quarterly figure release date if it makes sense
+- show rating of all saved stocks in an overview, show the difference between
+  the current and the last calculated store (last calculated score should be at
+  least X days old, doesn't make sense to show the score that was calculated
+  20seconds ago to compare it with the current one)
+
+- allow to show data/scores of all stores stocks
+- ask for quarterly release date when showin
+- get stock symbol from onvista page
+- get quarterly figure release dates from finanzen.net
+- allow to store quarterly release date figures of the future
+- get current stock quote from onvista page instead of from yahoo
 - add CLI:
  - allow to enter new STocks with symbol
  - offer to load stock data if it already exist
@@ -15,34 +30,13 @@ Features
 
 - check also main.py with pylint
 
-- EBIT Margin for 2016 still not available for a lot of stocks at January 2017,
-  how to handle it? The program asks for ebit margin of 2016
-  Check if current date < 2. quarter of the year? If yes, ask if the data from
-  the previous year should be used?
-- allow to enter NO analyst rating on the CLI, some stocks dont have a analyst
-  rating on yahoo
-- add README.mde file for github
-- clean up code, push to github
-- add todos to github
-- don't mix up currencies, e.g. get stock quote in USD and have EPS from
-  onvista in EUR 
-- get some fundamental data from https://blog.quandl.com/api-for-stock-data (eg
-  ebit margin)
 - add support for non-Dax Stocks
 - write more tests, ensure functions are also working correctly in corner cases
   (getting quotes on weekend  days, year breaks, etc)
 - only ask for stock data that is outdated on the CLI
-- require to enter currency symbol for market cap, output the currency symbol
-  from stock.__str__()
 - Store portfolio
-- store previous levermann rating to compare it with the current one, if the
-  stock was bought and lost >=2 Points advise to sell it
-- store Levermann CriteriaRating in EvaluationResult to archive all previous
-  evaluation results
 - store objects as JSON instead of using pickle? Would make it easier to
   transist objects to new versions?
-- store yahoo and onvista fundamental analysis website link in stock, show it
-  when entering data to make it easier to find the data?
 - Rename input module, to not clash with the naming of the input() function
 - make levermann evaluation threaded to speed it up (YQL queries take lot of
   time)
@@ -55,3 +49,4 @@ release date??
 # is it ensured that the quarterly figures are released during the time the
 # exchange is open? or could it be released outside of their opening hours
 # and we would have to check the following day instead?
+
