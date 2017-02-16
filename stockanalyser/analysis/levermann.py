@@ -225,11 +225,11 @@ class Levermann(object):
                 logger.info("Previous Levermann analysis is younger than 1"
                             " week and\nLevermann score hasn't changed."
                             "New analysis data is not stored.")
-                return result.score
+                return False
 
         self.evaluation_results.append(result)
 
-        return result.score
+        return True
 
     def eval_earning_growth(self):
         logger.debug("Evaluating earning growth")
@@ -548,18 +548,26 @@ class Levermann(object):
             pickle.dump(self, f)
 
     def short_summary_header(self):
-        s = "| {:<48} | {:<5} | {:<17} |".format("Name", "Score",
-                                                 "Evaluation Date")
+        s = ("| {:<43} | {:<2} ({:<8}) | {:<2} ({:<8})".\
+                format("Name", "Prev Score", "Prev Date", "Last Score", "Last Date"))
         s += "\n"
         s += "-" * 80
         return s
 
     def short_summary(self):
         r = self.evaluation_results[-1]
-        ts = r.timestamp.strftime("%x %X")
+        r_prev = None
+        r_prev_ts = "N/A"
+        r_prev_score = "N/A"
+        if len(self.evaluation_results) > 1:
+            r_prev = self.evaluation_results[-2]
+            r_prev_ts = r_prev.timestamp.strftime("%x")
+            r_prev_score = r_prev.score
 
-        s = "| {:<48} | {:<5} | {:<17} |".format(self.stock.name, r.score,
-                                                 (ts))
+        r_ts = r.timestamp.strftime("%x")
+
+        s = ("| {:<43} | {:<2} ({:<8}) | {:<2} ({:<8}) |".\
+                format(self.stock.name, r_prev_score, r_prev_ts, r.score, r_ts))
 
         return s
 
