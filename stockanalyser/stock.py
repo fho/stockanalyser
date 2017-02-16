@@ -56,9 +56,7 @@ class Stock(object):
         self.analyst_ratings = None
         self.onvista_fundamental_url = None
 
-        self.update_stock_info()
-
-    def fetch_onvista_data(self):
+    def _fetch_onvista_data(self):
         if not self.onvista_fundamental_url:
             raise MissingDataError("onvista_fundamental_url isn't set")
 
@@ -97,11 +95,22 @@ class Stock(object):
                                     " yahoo: '%s'" %
                                     data["MarketCapitalization"])
 
+        self._fetch_onvista_data()
+
     def set_eps(self, year, val):
         if not isinstance(val, Money):
             raise input.InvalidValueError("Expected value to be from type"
                                           " Money not %s" % type(val))
         eps = EPS(val, datetime.date.today())
+
+        if year in self.eps:
+            for e in self.eps[year]:
+                # If we already have a EPS value for that year, only store it
+                # the value differs or the other one is older than 6 months
+                if (e.value == val and
+                    (e.update_date > datetime.date.today() -
+                     datetime.timedelta(days=6*30))):
+                    return
 
         if year in self.eps:
             self.eps[year].append(eps)
