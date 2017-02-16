@@ -35,9 +35,7 @@ def query_input(value_name, val_type):
             elif val_type == QueryType.DATE:
                 v = input("> Please enter %s (Format: DD.MM.YYYY): " %
                           value_name)
-                struct = time.strptime(v, "%d.%m.%Y")
-                d = datetime.fromtimestamp(time.mktime(struct))
-                return d
+                return validate_str_date(v)
             elif val_type == QueryType.YAHOO_ANALYST_RATING:
                 v = float(input("> Please enter %s: " % value_name))
                 if v >= 1 and v <= 5:
@@ -54,7 +52,13 @@ def query_input(value_name, val_type):
             print("Please enter a valid %s value" % val_type)
 
 
+def validate_str_date(v):
+    struct = time.strptime(v, "%d.%m.%Y")
+    d = datetime.fromtimestamp(time.mktime(struct)).date
+    return d
+
+
 def validate_percent_value(v):
-    if v < 0 or v > 100:
+    if v > 100:
         raise InvalidValueError("Invalid percent value '%s': must be >=0,"
                                 " <=100" % v)
