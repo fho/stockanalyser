@@ -223,7 +223,7 @@ class Levermann(object):
                              "New Levermann anylsis: \n%s" %
                              (str(last), str(result)))
                 logger.info("Previous Levermann analysis is younger than 1"
-                            " week and Levermann score hasn't changed.\n"
+                            " week and\nLevermann score hasn't changed."
                             "New analysis data is not stored.")
                 return result.score
 
