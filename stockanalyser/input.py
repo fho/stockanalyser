@@ -54,9 +54,8 @@ def query_input(value_name, val_type):
 
 def validate_str_date(v):
     struct = time.strptime(v, "%d.%m.%Y")
-    d = datetime.fromtimestamp(time.mktime(struct)).date
+    d = datetime.fromtimestamp(time.mktime(struct)).date()
     return d
-
 
 def validate_percent_value(v):
     if v > 100:
