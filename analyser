@@ -22,22 +22,43 @@ logger = logging.getLogger(__name__)
 def configure_argparse():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", action='store_true')
-    parser.add_argument("-v", "--verbose", action='store_true')
-    parser.add_argument("-s", "--show", action='store_true')
-    parser.add_argument("-a", "--add", action='store_true')
+
+    subparsers = parser.add_subparsers()
+
+    show_parser = subparsers.add_parser("list")
+    show_parser.add_argument("-v", "--verbose", action='store_true')
+    show_parser.set_defaults(func=list)
+
+    add_parser = subparsers.add_parser("add")
+    add_parser.add_argument("stock_symbol", nargs="?", help="Stock Symbol with"
+                            " country ending")
+    add_parser.add_argument("-u", "--onvista-url")
+    add_parser.add_argument("-d", "--quarterly-figures-release-date",
+                            type=input.validate_str_date,
+                            help="Date of last quarterly figures release" \
+                                 " (DD.MM.YYY)")
+    add_parser.set_defaults(func=add)
+
+    show_parser = subparsers.add_parser("update")
+    show_parser.set_defaults(func=update)
 
     args = parser.parse_args()
 
     configure_logger(args.debug)
 
-    logger.debug("Argparse arguments: %s" % args)
-    if args.add:
-        add_stock()
-    elif args.show:
-        show(args.verbose)
-    else:
+    if not "func" in args:
         parser.print_help()
         sys.exit(0)
+
+    args.func(args)
+
+
+    #logger.debug("Argparse arguments: %s" % args)
+    #if args.add:
+    #    add_stock()
+    #elif args.show:
+    #    show(args.verbose)
+    #else:
 
 
 def configure_logger(debug):
@@ -62,19 +83,46 @@ def unpickle_levermann_objs():
     return levermann_objs
 
 
-def show(verbose):
+def update(args):
     levermann_objs = unpickle_levermann_objs()
+    updated_stocks=[]
     for l in levermann_objs:
-        if verbose:
+        l.stock.update_stock_info()
+        if l.stock.is_quarterly_figures_release_date_outdated():
+                logger.info("Please update Quarterly figures release date of"
+                            " %s. Last known date: %s" %
+                            (l.stock.symbol,
+                             l.stock.last_quarterly_figures_date))
+        if l.evaluate():
+            updated_stocks.append(l.stock.symbol)
+
+        l.save()
+    print("-" * 80)
+    print("The following Stocks were updated", "\n".join(updated_stocks))
+
+
+def list(args):
+    levermann_objs = unpickle_levermann_objs()
+    levermann_objs = sorted(levermann_objs,
+                            key=lambda x: x.evaluation_results[-1].score,
+                            reverse=True)
+    print(levermann_objs[0].short_summary_header())
+    for l in levermann_objs:
+        if args.verbose:
             print(l)
         else:
-            print("Levermann Score: %s" % l.evaluation_results[-1].score)
-        print("-" * 80)
+            print(l.short_summary())
+    print("-" * 80)
+    print("Total: %s" % len(levermann_objs))
 
 
-def add_stock():
+def add(args):
     create_data_dir()
-    sym = input.query_input("Stock Symbol", input.QueryType.STOCK_SYMBOL)
+
+    sym = args.stock_symbol
+    if not sym:
+        sym = input.query_input("Stock Symbol", input.QueryType.STOCK_SYMBOL)
+
     try:
         path = levermann.levermann_pickle_path(sym)
         if os.path.isfile(path):
@@ -84,26 +132,25 @@ def add_stock():
     except FileNotFoundError:
         pass
 
+    logger.info("Adding Stock %s" % sym)
+    onvista_url = args.onvista_url
+    if not onvista_url:
+        onvista_url = input.query_input("URL of onvista.de stock page",
+                                        input.QueryType.URL)
+
+    qf_date = args.quarterly_figures_release_date
+    if not qf_date:
+        qf_date = input.query_input("Date of last quarterly figures release",
+                                    input.QueryType.DATE)
+
     s = Stock(sym)
+    s.last_quarterly_figures_date = qf_date
+    s.onvista_fundamental_url = onvista_url
+    s.update_stock_info()
     l = Levermann(s)
-    set_leverman_values(s)
     l.evaluate()
     l.save()
     print(l)
-
-
-def set_leverman_values(stock):
-    cur_year = datetime.date.today().year
-    last_year = cur_year - 1
-
-    url = input.query_input("URL of onvista.de stock page",
-                            input.QueryType.URL)
-    stock.onvista_fundamental_url = url
-    stock.fetch_onvista_data()
-
-    val = input.query_input("Date of last quarterly figures release",
-                            input.QueryType.DATE)
-    stock.last_quarterly_figures_date = val
 
 
 def load_levermann():
