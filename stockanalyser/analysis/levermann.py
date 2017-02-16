@@ -340,7 +340,7 @@ class Levermann(object):
 
         other = eps_list[-2]
         # TODO: ensure that eps_list is always ordered on update_time
-        if not eps_list[-2].update_date >= min_date:
+        if not other.value == latest.value and other.update_date >= min_date:
             return None
 
         return ((latest.value / other) - 1) * 100
