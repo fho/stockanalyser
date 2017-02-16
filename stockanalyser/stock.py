@@ -84,6 +84,12 @@ class Stock(object):
         rating = scr.analyst_ratings()
         self.analyst_ratings = scr.analyst_ratings()
 
+    def is_quarterly_figures_release_date_outdated(self):
+        if (self.last_quarterly_figures_date <= (datetime.date.today() -
+            datetime.timedelta(days=30))):
+                return True
+        return False
+
     def update_stock_info(self):
         data = yahoo.get_stock_info(self.symbol)
         self.name = data["Name"]
