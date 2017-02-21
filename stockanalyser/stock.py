@@ -9,6 +9,7 @@ from stockanalyser.exceptions import InvalidValueError
 from stockanalyser.config import *
 from stockanalyser import fileutils
 from stockanalyser.data_source.onvista import OnvistaScraper
+from enum import Enum, unique
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -42,12 +43,20 @@ def unpickle_stock(symbol, dir=DATA_PATH):
         return pickle.load(open(path, "rb"))
 
 
+@unique
+class Cap(Enum):
+    SMALL = 1
+    MID = 2
+    LARGE = 3
+
+
 class Stock(object):
     def __init__(self, symbol):
         self.symbol = symbol
 
         self.name = None
         self.market_cap = None
+        self.cap_type = None
         self.roe = {}
         self.ebit_margin = {}
         self.equity_ratio = {}
@@ -55,6 +64,7 @@ class Stock(object):
         self.last_quarterly_figures_date = None
         self.analyst_ratings = None
         self.onvista_fundamental_url = None
+
 
     def _fetch_onvista_data(self):
         if not self.onvista_fundamental_url:
@@ -102,6 +112,13 @@ class Stock(object):
             raise InvalidValueError("Unknown Suffix in MarketCap value from"
                                     " yahoo: '%s'" %
                                     data["MarketCapitalization"])
+
+        if self.market_cap >= (5 * 10**9):
+            self.cap_type = Cap.LARGE
+        elif self.market_cap >= (2 * 10**9):
+            self.cap_type = Cap.MID
+        else:
+            self.cap_type = Cap.SMALL
 
         self._fetch_onvista_data()
 

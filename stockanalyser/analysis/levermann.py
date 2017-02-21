@@ -7,6 +7,7 @@ from stockanalyser.data_source import yahoo
 from stockanalyser.exceptions import NotSupportedError, InvalidValueError
 from stockanalyser.config import *
 from stockanalyser import fileutils
+from stockanalyser.stock import Cap
 from enum import Enum, unique
 
 logger = logging.getLogger(__name__)
@@ -55,12 +56,6 @@ class CriteriaRating(object):
 
 
 @unique
-class Cap(Enum):
-    SMALL = 1
-    MID = 2
-    LARGE = 3
-
-@unique
 class Recommendation(Enum):
     BUY = 1
     SELL = 2
@@ -71,7 +66,6 @@ class LevermannResult(object):
     def __init__(self):
         self.timestamp = datetime.datetime.now()
 
-        self.cap_type = None
         self.roe = None
         self.equity_ratio = None
         self.ebit_margin = None
@@ -105,7 +99,7 @@ class LevermannResult(object):
                                                   "%.2f%%" %
                                                   self.earning_growth.value,
                                                   self.earning_growth.points)
-        if self.cap_type == Cap.LARGE:
+        if self.three_month_reversal.value[::-1][0] != None:
             s += "{:<35} {:<25} | {} Points\n".format("3 month reversal:",
                                                       "%.2f%%, %.2f%%, %.2f%%" %
                                                       self.three_month_reversal.value[::-1],
@@ -200,15 +194,12 @@ class Levermann(object):
             raise NotSupportedError("Only DAX Stocks are supported."
                                     " The stock symbol has to end in .de")
 
-        if self.stock.market_cap >= (5 * 10**9):
+        if self.stock.cap_type == Cap.LARGE:
             self.reference_index = "^GDAXI"
-            self.cap_type = Cap.LARGE
-        elif self.stock.market_cap >= (2 * 10**9):
+        elif self.stock.cap_type == Cap.MID:
             self.reference_index = "^MDAXI"
-            self.cap_type = Cap.MID
-        else:
+        elif self.stock.cap_type == Cap.SMALL:
             self.reference_index = "^SDAXI"
-            self.cap_type = Cap.SMALL
 
     def evaluate(self):
         logger.info("Creating Levermann Analysis for %s" % self.stock.symbol)
@@ -299,8 +290,8 @@ class Levermann(object):
     def eval_three_month_reversal(self):
         logger.debug("Evaluating 3 month reversal")
  
-        if self.cap_type != Cap.LARGE:
-            return CriteriaRating((None, None), 0)
+        if self.stock.cap_type != Cap.LARGE:
+            return CriteriaRating((None, None, None), 0)
         d = prev_month(date.today())
         m1_diff = self._calc_ref_index_comp(d)
 
@@ -454,7 +445,7 @@ class Levermann(object):
 
         # for small caps with less than 5 ratings, the recommendations are
         # followed
-        if (self.cap_type == Cap.SMALL and
+        if (self.stock.cap_type == Cap.SMALL and
             (ratings[0] + ratings[1] + ratings[2]) < 5):
             if score >= 1 and score <= 1.5:
                 points = 1
@@ -581,7 +572,7 @@ class Levermann(object):
             pickle.dump(self, f)
 
     def short_summary_header(self):
-        s = ("| {:<35} | {:<3} ({:<8}) | {:<3} ({:<8}) | {:<5} |".\
+        s = ("| {:<30} | {:<3} ({:<8}) | {:<3} ({:<8}) | {:<5} |".\
                 format("Name", "Prev Score", "Prev Date", "Last Score",
                        "Last Date", "Recommendation"))
         s += "\n"
@@ -600,9 +591,9 @@ class Levermann(object):
 
         r_ts = r.timestamp.strftime("%x")
 
-        s = ("| {:<35} | {:<3} ({:<8}) | {:<3} ({:<8}) | {:<5} |".\
-                format(self.stock.name, r_prev_score, r_prev_ts, r.score, r_ts,
-                       self.recommendation().name))
+        s = ("| {:<30} | {:<4} | {:<3} ({:<8}) | {:<3} ({:<8}) | {:<5} |".\
+                format(self.stock.name, self.stock.cap_type, r_prev_score,
+                       r_prev_ts, r.score, r_ts, self.recommendation().name))
 
         return s
 
@@ -622,7 +613,7 @@ class Levermann(object):
              self.evaluation_results[-2].score) >= -2):
             return Recommendation.SELL
 
-        if self.cap_type == Cap.LARGE:
+        if self.stock.cap_type == Cap.LARGE:
             if self.evaluation_results[-1].score <= 2:
                 return Recommendation.SELL
             if self.evaluation_results[-1].score >= 4:
