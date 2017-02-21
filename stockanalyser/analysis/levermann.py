@@ -7,6 +7,7 @@ from stockanalyser.data_source import yahoo
 from stockanalyser.exceptions import NotSupportedError, InvalidValueError
 from stockanalyser.config import *
 from stockanalyser import fileutils
+from enum import Enum, unique
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +54,24 @@ class CriteriaRating(object):
         self.points = points
 
 
+@unique
+class Cap(Enum):
+    SMALL = 1
+    MID = 2
+    LARGE = 3
+
+@unique
+class Recommendation(Enum):
+    BUY = 1
+    SELL = 2
+    NONE = 3
+
+
 class LevermannResult(object):
     def __init__(self):
         self.timestamp = datetime.datetime.now()
 
+        self.cap_type = None
         self.roe = None
         self.equity_ratio = None
         self.ebit_margin = None
@@ -90,10 +105,11 @@ class LevermannResult(object):
                                                   "%.2f%%" %
                                                   self.earning_growth.value,
                                                   self.earning_growth.points)
-        s += "{:<35} {:<25} | {} Points\n".format("3 month reversal:",
-                                                  "%.2f%%, %.2f%%, %.2f%%" %
-                                                  self.three_month_reversal.value[::-1],
-                                                  self.three_month_reversal.points)
+        if self.cap_type == Cap.LARGE:
+            s += "{:<35} {:<25} | {} Points\n".format("3 month reversal:",
+                                                      "%.2f%%, %.2f%%, %.2f%%" %
+                                                      self.three_month_reversal.value[::-1],
+                                                      self.three_month_reversal.points)
         s += "{:<35} {:<25} | {} Points\n".format("Stock momentum (6m,"
                                                   "1y chg points):",
                                                   "%s Points, %s Points" %
@@ -184,13 +200,15 @@ class Levermann(object):
             raise NotSupportedError("Only DAX Stocks are supported."
                                     " The stock symbol has to end in .de")
 
-        if self.stock.market_cap < (5 * 10**9):
-            raise NotSupportedError("Only stocks with large market cap"
-                                    " (>=5*10^9) are supported."
-                                    " %s < %s" % (self.stock.market_cap,
-                                                  5*10**9))
-
-        self.reference_index = "^GDAXI"
+        if self.stock.market_cap >= (5 * 10**9):
+            self.reference_index = "^GDAXI"
+            self.cap_type = Cap.LARGE
+        elif self.stock.market_cap >= (2 * 10**9):
+            self.reference_index = "^MDAXI"
+            self.cap_type = Cap.MID
+        else:
+            self.reference_index = "^SDAXI"
+            self.cap_type = Cap.SMALL
 
     def evaluate(self):
         logger.info("Creating Levermann Analysis for %s" % self.stock.symbol)
@@ -280,6 +298,9 @@ class Levermann(object):
 
     def eval_three_month_reversal(self):
         logger.debug("Evaluating 3 month reversal")
+ 
+        if self.cap_type != Cap.LARGE:
+            return CriteriaRating((None, None), 0)
         d = prev_month(date.today())
         m1_diff = self._calc_ref_index_comp(d)
 
@@ -422,7 +443,7 @@ class Levermann(object):
     def eval_analyst_rating(self):
         if self.stock.analyst_ratings is None:
             logger.debug("No analyst rating available")
-            return 0
+            return CriteriaRating(None, 0)
 
         ratings = self.stock.analyst_ratings
         logger.debug("Analyst ratings: %s" % str(ratings))
@@ -431,12 +452,24 @@ class Levermann(object):
 
         logger.debug("Analyst score: %s" % score)
 
-        if score >= 1 and score <= 1.5:
-            points = -1
-        if score > 1.5 and score < 2.5:
-            points = 0
-        if score >= 2.5:
-            points = 1
+        # for small caps with less than 5 ratings, the recommendations are
+        # followed
+        if (self.cap_type == Cap.SMALL and
+            (ratings[0] + ratings[1] + ratings[2]) < 5):
+            if score >= 1 and score <= 1.5:
+                points = 1
+            if score > 1.5 and score < 2.5:
+                points = 0
+            if score >= 2.5:
+                points = -1
+        else:
+        # for other stocks the recommendation is inverted
+            if score >= 1 and score <= 1.5:
+                points = -1
+            if score > 1.5 and score < 2.5:
+                points = 0
+            if score >= 2.5:
+                points = 1
 
         return CriteriaRating(score, points)
 
@@ -548,8 +581,9 @@ class Levermann(object):
             pickle.dump(self, f)
 
     def short_summary_header(self):
-        s = ("| {:<43} | {:<2} ({:<8}) | {:<2} ({:<8})".\
-                format("Name", "Prev Score", "Prev Date", "Last Score", "Last Date"))
+        s = ("| {:<35} | {:<3} ({:<8}) | {:<3} ({:<8}) | {:<5} |".\
+                format("Name", "Prev Score", "Prev Date", "Last Score",
+                       "Last Date", "Recommendation"))
         s += "\n"
         s += "-" * 80
         return s
@@ -566,8 +600,9 @@ class Levermann(object):
 
         r_ts = r.timestamp.strftime("%x")
 
-        s = ("| {:<43} | {:<2} ({:<8}) | {:<2} ({:<8}) |".\
-                format(self.stock.name, r_prev_score, r_prev_ts, r.score, r_ts))
+        s = ("| {:<35} | {:<3} ({:<8}) | {:<3} ({:<8}) | {:<5} |".\
+                format(self.stock.name, r_prev_score, r_prev_ts, r.score, r_ts,
+                       self.recommendation().name))
 
         return s
 
@@ -580,3 +615,23 @@ class Levermann(object):
         s = str(self.stock)
         s += str(r)
         return s
+
+    def recommendation(self):
+        if (len(self.evaluation_results) >= 2 and
+            (self.evaluation_results[-1].score -
+             self.evaluation_results[-2].score) >= -2):
+            return Recommendation.SELL
+
+        if self.cap_type == Cap.LARGE:
+            if self.evaluation_results[-1].score <= 2:
+                return Recommendation.SELL
+            if self.evaluation_results[-1].score >= 4:
+                return Recommendation.BUY
+            return Recommendation.NONE
+
+        if self.evaluation_results[-1].score <= 4:
+            return Recommendation.SELL
+        if self.evaluation_results[-1].score >= 7:
+            return Recommendation.BUY
+
+        return Recommendation.NONE

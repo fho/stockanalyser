@@ -96,6 +96,8 @@ class Stock(object):
         self.quote = Money(float(data["PreviousClose"]), data["Currency"])
         if data["MarketCapitalization"][-1] == "B":
             self.market_cap = float(data["MarketCapitalization"][:-1]) * 10**9
+        elif data["MarketCapitalization"][-1] == "M":
+            self.market_cap = float(data["MarketCapitalization"][:-1]) * 10**6
         else:
             raise InvalidValueError("Unknown Suffix in MarketCap value from"
                                     " yahoo: '%s'" %
