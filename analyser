@@ -85,20 +85,27 @@ def unpickle_levermann_objs():
 
 def update(args):
     levermann_objs = unpickle_levermann_objs()
-    updated_stocks=[]
+    updated_stocks = []
+    qfig_update_req = []
+
     for l in levermann_objs:
+        print("Creating Levermann Analysis for %s" % l.stock.symbol)
         l.stock.update_stock_info()
         if l.stock.is_quarterly_figures_release_date_outdated():
-                logger.info("Please update Quarterly figures release date of"
-                            " %s. Last known date: %s" %
+                logger.debug("Please update Quarterly figures release date of"
+                             " %s. Last known date: %s" %
                             (l.stock.symbol,
                              l.stock.last_quarterly_figures_date))
+                qfig_update_req.append(l.stock.symbol)
         if l.evaluate():
             updated_stocks.append(l.stock.symbol)
 
         l.save()
     print("-" * 80)
-    print("The following Stocks were updated", "\n".join(updated_stocks))
+    print("For the following stocks the last figure release date is outdated:\n",
+          "\n".join(qfig_update_req))
+    print("-" * 80)
+    print("The following Stocks were updated:", "\n".join(updated_stocks))
 
 
 def list(args):
