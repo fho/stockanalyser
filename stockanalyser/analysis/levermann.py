@@ -289,7 +289,7 @@ class Levermann(object):
 
     def eval_three_month_reversal(self):
         logger.debug("Evaluating 3 month reversal")
- 
+
         if self.stock.cap_type != Cap.LARGE:
             return CriteriaRating((None, None, None), 0)
         d = prev_month(date.today())
@@ -392,8 +392,8 @@ class Levermann(object):
     def eval_quarterly_figures_reaction(self):
         logger.debug("Evaluating stock reaction on"
                      "quarterly figures")
-        qf_date = self.stock.last_quarterly_figures_date
-        qf_prev_day = prev_weekday(self.stock.last_quarterly_figures_date)
+        qf_date = self.stock.last_quarterly_figures_release_date()
+        qf_prev_day = prev_weekday(self.stock.last_quarterly_figures_release_date())
 
         qf_previous_day_quote = yahoo.stock_quote(self.stock.symbol,
                                                   qf_prev_day)
@@ -592,7 +592,7 @@ class Levermann(object):
         r_ts = r.timestamp.strftime("%x")
 
         s = ("| {:<30} | {:<4} | {:<3} ({:<8}) | {:<3} ({:<8}) | {:<5} |".\
-                format(self.stock.name, self.stock.cap_type, r_prev_score,
+                format(self.stock.name, self.stock.cap_type.name, r_prev_score,
                        r_prev_ts, r.score, r_ts, self.recommendation().name))
 
         return s
@@ -610,7 +610,7 @@ class Levermann(object):
     def recommendation(self):
         if (len(self.evaluation_results) >= 2 and
             (self.evaluation_results[-1].score -
-             self.evaluation_results[-2].score) >= -2):
+             self.evaluation_results[-2].score) <= -2):
             return Recommendation.SELL
 
         if self.stock.cap_type == Cap.LARGE:

@@ -39,8 +39,17 @@ def configure_argparse():
                                  " (DD.MM.YYY)")
     add_parser.set_defaults(func=add)
 
-    show_parser = subparsers.add_parser("update")
-    show_parser.set_defaults(func=update)
+    update_parser = subparsers.add_parser("update")
+    update_parser.set_defaults(func=update)
+
+    set_parser = subparsers.add_parser("set")
+    set_parser.add_argument("stock_symbol",  help="Stock Symbol with"
+                            " country ending")
+    set_parser.add_argument("-d", "--quarterly-figures-release-date",
+                            type=input.validate_str_date, required=False,
+                            help="Add Date of quarterly figures "\
+                                 "release (DD.MM.YYY)")
+    set_parser.set_defaults(func=set)
 
     args = parser.parse_args()
 
@@ -83,6 +92,27 @@ def unpickle_levermann_objs():
     return levermann_objs
 
 
+def set(args):
+    print(args)
+    sym = args.stock_symbol
+
+    path = levermann.levermann_pickle_path(sym)
+    if not os.path.isfile(path):
+        print("Stock %s data file doesn't exist.\n" % (sym, path))
+        sys.exit(1)
+    l = unpickle_levermann_sym(sym)
+    
+    if args.quarterly_figures_release_date in l.stock.quarterly_figure_dates:
+        print("Date was already stored, stored quarterly figure release dates:"
+              " %s" % l.stock.quarterly_figure_dates)
+        return
+
+    l.stock.quarterly_figure_dates.append(args.quarterly_figures_release_date)
+    l.save()
+    print("Last Quarterly figures release stored, stored dates: %s" %
+          l.stock.quarterly_figure_dates)
+
+
 def update(args):
     levermann_objs = unpickle_levermann_objs()
     updated_stocks = []
@@ -95,7 +125,7 @@ def update(args):
                 logger.debug("Please update Quarterly figures release date of"
                              " %s. Last known date: %s" %
                             (l.stock.symbol,
-                             l.stock.last_quarterly_figures_date))
+                             l.stock.last_quarterly_figures_release_date()))
                 qfig_update_req.append(l.stock.symbol)
         if l.evaluate():
             updated_stocks.append(l.stock.symbol)

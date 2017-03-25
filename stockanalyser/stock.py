@@ -61,7 +61,7 @@ class Stock(object):
         self.ebit_margin = {}
         self.equity_ratio = {}
         self.eps = {}
-        self.last_quarterly_figures_date = None
+        self.quarterly_figure_dates = []
         self.analyst_ratings = None
         self.onvista_fundamental_url = None
 
@@ -94,9 +94,18 @@ class Stock(object):
         rating = scr.analyst_ratings()
         self.analyst_ratings = scr.analyst_ratings()
 
+    def last_quarterly_figures_release_date(self):
+        self.quarterly_figure_dates.sort()
+        today = datetime.date.today()
+        for d in reversed(self.quarterly_figure_dates):
+            if d <= today:
+                return d
+
+
     def is_quarterly_figures_release_date_outdated(self):
-        if (self.last_quarterly_figures_date <= (datetime.date.today() -
-            datetime.timedelta(days=30))):
+        self.quarterly_figure_dates.sort()
+        if (self.quarterly_figure_dates[-1] <= (datetime.date.today() -
+            datetime.timedelta(days=60))):
                 return True
         return False
 
