@@ -199,7 +199,7 @@ def add(args):
                                     input.QueryType.DATE)
 
     s = Stock(sym)
-    s.last_quarterly_figures_date = qf_date
+    s.quarterly_figure_dates.append(qf_date)
     s.onvista_fundamental_url = onvista_url
     s.update_stock_info()
     l = Levermann(s)
