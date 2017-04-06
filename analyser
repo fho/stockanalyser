@@ -27,6 +27,9 @@ def configure_argparse():
 
     show_parser = subparsers.add_parser("list")
     show_parser.add_argument("-v", "--verbose", action='store_true')
+    show_parser.add_argument("-o", "--outdated", 
+                             help="show list of stocks with outdated"
+                             " figure release date", action='store_true')
     show_parser.set_defaults(func=list)
 
     add_parser = subparsers.add_parser("add")
@@ -138,8 +141,23 @@ def update(args):
     print("The following Stocks were updated:", "\n".join(updated_stocks))
 
 
+def show_outdated(levermann_objs):
+    outdated = []
+    for l in levermann_objs:
+        if l.stock.is_quarterly_figures_release_date_outdated():
+            outdated.append("%s (%s): %s" %
+                               (l.stock.name, l.stock.symbol,
+                                l.stock.last_quarterly_figures_release_date()))
+    print("For the following stocks the last figure release date is outdated:\n",
+          "\n".join(outdated))
+    print("-" * 80)
+
+
 def list(args):
     levermann_objs = unpickle_levermann_objs()
+    if args.outdated:
+        return show_outdated(levermann_objs)
+
     levermann_objs = sorted(levermann_objs,
                             key=lambda x: x.evaluation_results[-1].score,
                             reverse=True)
