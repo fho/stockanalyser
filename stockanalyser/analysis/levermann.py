@@ -242,6 +242,8 @@ class Levermann(object):
 
     def eval_earning_growth(self):
         logger.debug("Evaluating earning growth")
+        #TODO: ensure that eps is always sorted in stock
+
         eps_cur_year = self.stock.eps[THIS_YEAR][-1].value
         eps_next_year = self.stock.eps[THIS_YEAR + 1][-1].value
 
@@ -346,16 +348,12 @@ class Levermann(object):
         return CriteriaRating(chg, points)
 
     def _calc_eps_chg(self, eps_list):
-        assert len(eps_list) > 2
+        assert len(eps_list) >= 2
         latest = eps_list[-1]
-        min_date = latest.update_date - timedelta(days=6*30)
-
         other = eps_list[-2]
-        # TODO: ensure that eps_list is always ordered on update_time
-        if not other.value == latest.value and other.update_date >= min_date:
-            return None
+        logger.debug("EPS vals: latest: %s, other: %s" % (latest, other))
 
-        return ((latest.value / other) - 1) * 100
+        return ((latest.value.amount / other.value.amount) - 1) * 100
 
     def _calc_earning_rev_points(self, chg):
         if chg >= -5 and chg <= 5:
