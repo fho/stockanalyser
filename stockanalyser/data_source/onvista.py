@@ -43,6 +43,8 @@ class OnvistaScraper(object):
 
     def _get_analyst_rating(self, xpath):
         res = self.overview_etree.xpath(xpath)
+        if not res:
+            return None
         v = int(res[0].strip())
         return v
 

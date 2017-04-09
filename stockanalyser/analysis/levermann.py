@@ -128,7 +128,7 @@ class LevermannResult(object):
                                                   self.quarterly_figures_reaction.value,
                                                   self.quarterly_figures_reaction.points)
         s += "{:<35} {:<25} | {} Points\n".format("Yahoo analyst rating",
-                                                  self.analyst_rating.value,
+                                                  str(self.analyst_rating.value or ""),
                                                   self.analyst_rating.points)
         s += "{:<35} {:<25.2f} | {} Points\n".format("Price earnings ratio",
                                                      self.price_earnings_ratio.value,
@@ -430,7 +430,9 @@ class Levermann(object):
         return CriteriaRating(rel_qf_reaction, points)
 
     def eval_analyst_rating(self):
-        if self.stock.analyst_ratings is None:
+        if (self.stock.analyst_ratings[0] is None or
+            self.stock.analyst_ratings[1] is None or
+            self.stock.analyst_ratings[2] is None):
             logger.debug("No analyst rating available")
             return CriteriaRating(None, 0)
 
