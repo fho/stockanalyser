@@ -31,7 +31,7 @@ def get_yql_result(params):
             tries += 1
 
             logger.debug("Got Yahoo stock data response: '%s'" % resp)
-            res = json.loads(resp)
+            res = json.loads(resp.decode("utf-8"))
             if (int(res["query"]["count"]) == 0 or
                 ("Name" in res["query"]["results"]["quote"] and
                  not res["query"]["results"]["quote"]["Name"])):
