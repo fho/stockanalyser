@@ -9,6 +9,7 @@ from stockanalyser.exceptions import InvalidValueError
 from stockanalyser.config import *
 from stockanalyser import fileutils
 from stockanalyser.data_source.onvista import OnvistaScraper
+from stockanalyser.data_source.finanzen_net import FinanzenNetScraper
 from enum import Enum, unique
 
 logging.basicConfig(level=logging.DEBUG)
@@ -51,7 +52,7 @@ class Cap(Enum):
 
 
 class Stock(object):
-    def __init__(self, symbol):
+    def __init__(self, symbol, onvista_fundamental_url=None, finanzen_net_url=None):
         self.symbol = symbol
 
         self.name = None
@@ -63,8 +64,12 @@ class Stock(object):
         self.eps = {}
         self.quarterly_figure_dates = []
         self.analyst_ratings = None
-        self.onvista_fundamental_url = None
+        self.onvista_fundamental_url = onvista_fundamental_url
+        self.finanzen_net_url = finanzen_net_url
 
+    def _fetch_finanzen_net_data(self):
+        scrp = FinanzenNetScraper(self.finanzen_net_url)
+        self.quarterly_figure_dates = [scrp.fetch_recent_quarterly_figures_release_date()]
 
     def _fetch_onvista_data(self):
         if not self.onvista_fundamental_url:
@@ -130,6 +135,7 @@ class Stock(object):
             self.cap_type = Cap.SMALL
 
         self._fetch_onvista_data()
+        self._fetch_finanzen_net_data()
 
     def set_eps(self, year, val):
         if not isinstance(val, Money):
@@ -199,4 +205,11 @@ if __name__ == "__main__":
     from pprint import pprint
     logging.basicConfig(level=logging.DEBUG)
     s = Stock("VOW.DE")
-    pprint(s.market_cap)
+    s.onvista_fundamental_url = "http://www.onvista.de/aktien/Volkswagen-ST-Aktie-DE0007664005"
+    s.finanzen_net_url = "http://www.finanzen.net/termine/Volkswagen"
+    s.update_stock_info()
+    """
+    s2 = Stock("MUV2.DE")
+    s2.onvista_fundamental_url = "http://www.onvista.de/aktien/Muenchener-Rueck-Aktie-DE0008430026"
+    s2.update_stock_info()
+    """

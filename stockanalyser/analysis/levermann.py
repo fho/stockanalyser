@@ -626,3 +626,20 @@ class Levermann(object):
             return Recommendation.BUY
 
         return Recommendation.NONE
+
+
+if __name__ == "__main__":
+    from pprint import pprint
+    from stockanalyser.stock import Stock
+
+    logging.basicConfig(level=logging.DEBUG)
+    s = Stock("VOW.DE")
+    s.onvista_fundamental_url = "http://www.onvista.de/aktien/Volkswagen-ST-Aktie-DE0007664005"
+    s.finanzen_net_url = "http://www.finanzen.net/termine/Volkswagen"
+    s.update_stock_info()
+    leverman = Levermann(stock=s)
+    pprint(leverman.evaluate())
+
+    s2 = Stock("MUV2.DE")
+    s2.onvista_fundamental_url = "http://www.onvista.de/aktien/Muenchener-Rueck-Aktie-DE0008430026"
+    s2.update_stock_info()
