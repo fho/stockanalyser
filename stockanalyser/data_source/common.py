@@ -1,6 +1,7 @@
 import urllib.request
 import lxml.etree
 import logging
+import lxml.html
 
 logger = logging.getLogger(__name__)
 

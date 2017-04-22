@@ -3,12 +3,15 @@ import os
 import pickle
 import logging
 import datetime
+import requests
+import json
 from stockanalyser.data_source import yahoo
 from stockanalyser.mymoney import Money
 from stockanalyser.exceptions import InvalidValueError
 from stockanalyser.config import *
 from stockanalyser import fileutils
 from stockanalyser.data_source.onvista import OnvistaScraper
+from stockanalyser.data_source.finanzen_net import FinanzenNetScraper
 from enum import Enum, unique
 
 logging.basicConfig(level=logging.DEBUG)
@@ -51,9 +54,11 @@ class Cap(Enum):
 
 
 class Stock(object):
-    def __init__(self, symbol):
-        self.symbol = symbol
+    def __init__(self, symbol=None, onvista_fundamental_url=None, finanzen_net_url=None, isin=None):
+        if symbol == None:
+            symbol = yahoo.lookupSymbol(isin)
 
+        self.symbol = symbol
         self.name = None
         self.market_cap = None
         self.cap_type = None
@@ -63,10 +68,28 @@ class Stock(object):
         self.eps = {}
         self.quarterly_figure_dates = []
         self.analyst_ratings = None
-        self.onvista_fundamental_url = None
+        self.onvista_fundamental_url = onvista_fundamental_url
+        self.finanzen_net_url = finanzen_net_url
+        self.isin = isin
 
+
+    def _fetch_finanzen_net_data(self):
+        scrp = FinanzenNetScraper(self.finanzen_net_url, isin=self.isin)
+        self.quarterly_figure_dates = [scrp.fetch_recent_quarterly_figures_release_date()]
+
+    def _lookupFundamentalUrl(self):
+        lookup_url = "http://www.onvista.de/onvista/boxes/assetSearch.json?doSubmit=Suchen&portfolioName=&searchValue=%s" % self.isin
+        json_response = requests.get(lookup_url).json()
+        assets = json_response['onvista']['results']['asset']
+        assert len(assets) == 1
+        target_url = assets[0]['snapshotlink']
+        logging.debug("fundamental url found: %s" % target_url)
+        return target_url
 
     def _fetch_onvista_data(self):
+        if self.isin:
+            self.onvista_fundamental_url = self._lookupFundamentalUrl()
+
         if not self.onvista_fundamental_url:
             raise MissingDataError("onvista_fundamental_url isn't set")
 
@@ -91,7 +114,6 @@ class Stock(object):
             if v is not None:
                 self.set_roe(k, v)
 
-        rating = scr.analyst_ratings()
         self.analyst_ratings = scr.analyst_ratings()
 
     def last_quarterly_figures_release_date(self):
@@ -109,7 +131,10 @@ class Stock(object):
                 return True
         return False
 
+
+
     def update_stock_info(self):
+
         data = yahoo.get_stock_info(self.symbol)
         self.name = data["Name"]
         self.quote = Money(float(data["PreviousClose"]), data["Currency"])
@@ -130,6 +155,7 @@ class Stock(object):
             self.cap_type = Cap.SMALL
 
         self._fetch_onvista_data()
+        self._fetch_finanzen_net_data()
 
     def set_eps(self, year, val):
         if not isinstance(val, Money):
@@ -199,4 +225,11 @@ if __name__ == "__main__":
     from pprint import pprint
     logging.basicConfig(level=logging.DEBUG)
     s = Stock("VOW.DE")
-    pprint(s.market_cap)
+    s.onvista_fundamental_url = "http://www.onvista.de/aktien/Volkswagen-ST-Aktie-DE0007664005"
+    s.finanzen_net_url = "http://www.finanzen.net/termine/Volkswagen"
+    s.update_stock_info()
+    """
+    s2 = Stock("MUV2.DE")
+    s2.onvista_fundamental_url = "http://www.onvista.de/aktien/Muenchener-Rueck-Aktie-DE0008430026"
+    s2.update_stock_info()
+    """
