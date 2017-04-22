@@ -36,11 +36,12 @@ def configure_argparse():
     add_parser.add_argument("stock_symbol", nargs="?", help="Stock Symbol with"
                             " country ending")
     add_parser.add_argument("-u", "--onvista-url")
-    add_parser.add_argument("-d", "--quarterly-figures-release-date",
-                            type=input.validate_str_date,
-                            help="Date of last quarterly figures release" \
-                                 " (DD.MM.YYY)")
+    add_parser.add_argument("-f", "--finanzen-net-url")
     add_parser.set_defaults(func=add)
+
+    one_shot_parser = subparsers.add_parser("oneshot")
+    one_shot_parser.add_argument("-i", "--isin")
+    one_shot_parser.set_defaults(func=oneshot)
 
     update_parser = subparsers.add_parser("update")
     update_parser.set_defaults(func=update)
@@ -48,10 +49,6 @@ def configure_argparse():
     set_parser = subparsers.add_parser("set")
     set_parser.add_argument("stock_symbol",  help="Stock Symbol with"
                             " country ending")
-    set_parser.add_argument("-d", "--quarterly-figures-release-date",
-                            type=input.validate_str_date, required=False,
-                            help="Add Date of quarterly figures "\
-                                 "release (DD.MM.YYY)")
     set_parser.set_defaults(func=set)
 
     args = parser.parse_args()
@@ -193,18 +190,21 @@ def add(args):
         onvista_url = input.query_input("URL of onvista.de stock page",
                                         input.QueryType.URL)
 
-    qf_date = args.quarterly_figures_release_date
-    if not qf_date:
-        qf_date = input.query_input("Date of last quarterly figures release",
-                                    input.QueryType.DATE)
-
     s = Stock(sym)
-    s.quarterly_figure_dates.append(qf_date)
     s.onvista_fundamental_url = onvista_url
+    s.finanzen_net_url = args.finanzen_net_url
     s.update_stock_info()
     l = Levermann(s)
     l.evaluate()
     l.save()
+    print(l)
+
+
+def oneshot(args):
+    s = Stock(isin=args.isin)
+    s.update_stock_info()
+    l = Levermann(s)
+    l.evaluate()
     print(l)
 
 

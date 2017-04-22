@@ -190,16 +190,14 @@ class Levermann(object):
         self.stock = stock
         self.evaluation_results = []
 
-        if ".de" not in self.stock.symbol.lower():
-            raise NotSupportedError("Only DAX Stocks are supported."
-                                    " The stock symbol has to end in .de")
-
         if self.stock.cap_type == Cap.LARGE:
             self.reference_index = "^GDAXI"
         elif self.stock.cap_type == Cap.MID:
             self.reference_index = "^MDAXI"
         elif self.stock.cap_type == Cap.SMALL:
             self.reference_index = "^SDAXI"
+        else:
+            self.reference_index = "^UNKNOWN"
 
     def evaluate(self):
         logger.info("Creating Levermann Analysis for %s" % self.stock.symbol)
@@ -631,7 +629,7 @@ class Levermann(object):
 if __name__ == "__main__":
     from pprint import pprint
     from stockanalyser.stock import Stock
-
+    """"
     logging.basicConfig(level=logging.DEBUG)
     s = Stock("VOW.DE")
     s.onvista_fundamental_url = "http://www.onvista.de/aktien/Volkswagen-ST-Aktie-DE0007664005"
@@ -639,6 +637,15 @@ if __name__ == "__main__":
     s.update_stock_info()
     leverman = Levermann(stock=s)
     pprint(leverman.evaluate())
+    """
+    
+    s = Stock("SIE.DE")
+    s.onvista_fundamental_url = "http://www.onvista.de/aktien/Siemens-Aktie-DE0007236101"
+    s.finanzen_net_url = "http://www.finanzen.net/termine/Siemens"
+    s.update_stock_info()
+    leverman = Levermann(stock=s)
+    pprint(leverman.evaluate())
+
 
     s2 = Stock("MUV2.DE")
     s2.onvista_fundamental_url = "http://www.onvista.de/aktien/Muenchener-Rueck-Aktie-DE0008430026"
