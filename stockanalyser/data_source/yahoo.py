@@ -4,6 +4,7 @@ import logging
 import json
 import datetime
 import time
+from stockanalyser.data_source import common
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,14 @@ def get_stock_info(symbol):
 
     return get_yql_result(params)
 
+
+def lookupSymbol(isin):
+        lookup_url = "https://de.finance.yahoo.com/lookup?s=%s" % isin
+        etree = common.url_to_etree(lookup_url)
+        #TODO using the same query we can easily find out the stock exchange, where the stock is listed
+        symbol = etree.xpath('.//a[@data-reactid][@title][@class=""]')[0].text_content()
+        logger.debug("Looked up yahoo symbol: %s" % (symbol))
+        return symbol
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

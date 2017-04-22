@@ -3,6 +3,8 @@ import os
 import pickle
 import logging
 import datetime
+import requests
+import json
 from stockanalyser.data_source import yahoo
 from stockanalyser.mymoney import Money
 from stockanalyser.exceptions import InvalidValueError
@@ -52,9 +54,11 @@ class Cap(Enum):
 
 
 class Stock(object):
-    def __init__(self, symbol, onvista_fundamental_url=None, finanzen_net_url=None):
-        self.symbol = symbol
+    def __init__(self, symbol=None, onvista_fundamental_url=None, finanzen_net_url=None, isin=None):
+        if symbol == None:
+            symbol = yahoo.lookupSymbol(isin)
 
+        self.symbol = symbol
         self.name = None
         self.market_cap = None
         self.cap_type = None
@@ -66,12 +70,26 @@ class Stock(object):
         self.analyst_ratings = None
         self.onvista_fundamental_url = onvista_fundamental_url
         self.finanzen_net_url = finanzen_net_url
+        self.isin = isin
+
 
     def _fetch_finanzen_net_data(self):
-        scrp = FinanzenNetScraper(self.finanzen_net_url)
+        scrp = FinanzenNetScraper(self.finanzen_net_url, isin=self.isin)
         self.quarterly_figure_dates = [scrp.fetch_recent_quarterly_figures_release_date()]
 
+    def _lookupFundamentalUrl(self):
+        lookup_url = "http://www.onvista.de/onvista/boxes/assetSearch.json?doSubmit=Suchen&portfolioName=&searchValue=%s" % self.isin
+        json_response = requests.get(lookup_url).json()
+        assets = json_response['onvista']['results']['asset']
+        assert len(assets) == 1
+        target_url = assets[0]['snapshotlink']
+        logging.debug("fundamental url found: %s" % target_url)
+        return target_url
+
     def _fetch_onvista_data(self):
+        if self.isin:
+            self.onvista_fundamental_url = self._lookupFundamentalUrl()
+
         if not self.onvista_fundamental_url:
             raise MissingDataError("onvista_fundamental_url isn't set")
 
@@ -96,7 +114,6 @@ class Stock(object):
             if v is not None:
                 self.set_roe(k, v)
 
-        rating = scr.analyst_ratings()
         self.analyst_ratings = scr.analyst_ratings()
 
     def last_quarterly_figures_release_date(self):
@@ -114,7 +131,10 @@ class Stock(object):
                 return True
         return False
 
+
+
     def update_stock_info(self):
+
         data = yahoo.get_stock_info(self.symbol)
         self.name = data["Name"]
         self.quote = Money(float(data["PreviousClose"]), data["Currency"])
