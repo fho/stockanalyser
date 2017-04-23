@@ -197,7 +197,8 @@ class Levermann(object):
         elif self.stock.cap_type == Cap.SMALL:
             self.reference_index = "^SDAXI"
         else:
-            self.reference_index = "^UNKNOWN"
+            raise NotSupportedError("Only DAX Stocks are supported."
+                                    " The stock symbol has to end in .de")
 
     def evaluate(self):
         logger.info("Creating Levermann Analysis for %s" % self.stock.symbol)
