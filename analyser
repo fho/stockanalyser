@@ -33,15 +33,9 @@ def configure_argparse():
     show_parser.set_defaults(func=list)
 
     add_parser = subparsers.add_parser("add")
-    add_parser.add_argument("stock_symbol", nargs="?", help="Stock Symbol with"
-                            " country ending")
-    add_parser.add_argument("-u", "--onvista-url")
-    add_parser.add_argument("-f", "--finanzen-net-url")
+    add_parser.add_argument("ISIN", nargs="?", help="Stock ISIN")
+    add_parser.add_argument("-i", "--isin")
     add_parser.set_defaults(func=add)
-
-    one_shot_parser = subparsers.add_parser("oneshot")
-    one_shot_parser.add_argument("-i", "--isin")
-    one_shot_parser.set_defaults(func=oneshot)
 
     update_parser = subparsers.add_parser("update")
     update_parser.set_defaults(func=update)
@@ -170,41 +164,15 @@ def list(args):
 
 def add(args):
     create_data_dir()
+    print(args)
 
-    sym = args.stock_symbol
-    if not sym:
-        sym = input.query_input("Stock Symbol", input.QueryType.STOCK_SYMBOL)
-
-    try:
-        path = levermann.levermann_pickle_path(sym)
-        if os.path.isfile(path):
-            print("Stock %s data file already exists.\n"
-                  "Delete the file '%s' to remove it." % (sym, path))
-            sys.exit(0)
-    except FileNotFoundError:
-        pass
-
-    logger.info("Adding Stock %s" % sym)
-    onvista_url = args.onvista_url
-    if not onvista_url:
-        onvista_url = input.query_input("URL of onvista.de stock page",
-                                        input.QueryType.URL)
-
-    s = Stock(sym)
-    s.onvista_fundamental_url = onvista_url
-    s.finanzen_net_url = args.finanzen_net_url
+    s = Stock(isin=args.ISIN)
     s.update_stock_info()
+
+    logger.info("Adding Stock %s" % s.symbol)
     l = Levermann(s)
     l.evaluate()
     l.save()
-    print(l)
-
-
-def oneshot(args):
-    s = Stock(isin=args.isin)
-    s.update_stock_info()
-    l = Levermann(s)
-    l.evaluate()
     print(l)
 
 
