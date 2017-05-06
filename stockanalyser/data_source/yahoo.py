@@ -84,7 +84,7 @@ def lookupSymbol(isin):
         etree = common.url_to_etree(lookup_url)
         #TODO using the same query we can easily find out the stock exchange, where the stock is listed
         symbol = etree.xpath('.//a[@data-reactid][@title][@class=""]')[0].text_content()
-        logger.debug("Looked up yahoo symbol: %s" % (symbol))
+        logger.debug("Stock symbol for ISIN %s: %s" % (isin, symbol))
         return symbol
 
 if __name__ == "__main__":
