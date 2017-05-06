@@ -571,12 +571,15 @@ class Levermann(object):
             pickle.dump(self, f)
 
     def short_summary_header(self):
-        s = ("| {:<30} | {:<3} ({:<8}) | {:<3} ({:<8}) | {:<5} |".\
-                format("Name", "Prev Score", "Prev Date", "Last Score",
-                       "Last Date", "Recommendation"))
+        s = ("| {:<25} | {:<14} | {:<14} | {:<6} |".\
+                format("Name", "Prev Score (Date)", "Last Score (Date)",
+                       "Advise"))
         s += "\n"
-        s += "-" * 80
+        s += "-" * 78
         return s
+
+    def short_summary_footer(self):
+        return "-" * 78
 
     def short_summary(self):
         r = self.evaluation_results[-1]
@@ -590,8 +593,8 @@ class Levermann(object):
 
         r_ts = r.timestamp.strftime("%x")
 
-        s = ("| {:<30} | {:<4} | {:<3} ({:<8}) | {:<3} ({:<8}) | {:<5} |".\
-                format(self.stock.name, self.stock.cap_type.name, r_prev_score,
+        s = ("| {:<25} | {:<6} ({:<8}) | {:<6} ({:<8}) | {:<6} |".\
+                format(self.stock.name, r_prev_score,
                        r_prev_ts, r.score, r_ts, self.recommendation().name))
 
         return s

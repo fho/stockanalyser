@@ -156,7 +156,7 @@ def list(args):
             print(l)
         else:
             print(l.short_summary())
-    print("-" * 80)
+    print(levermann_objs[0].short_summary_footer())
     print("Total: %s" % len(levermann_objs))
 
 
