@@ -33,8 +33,7 @@ def configure_argparse():
     show_parser.set_defaults(func=list)
 
     add_parser = subparsers.add_parser("add")
-    add_parser.add_argument("ISIN", nargs="?", help="Stock ISIN")
-    add_parser.add_argument("-i", "--isin")
+    add_parser.add_argument("ISIN", help="Stock ISIN")
     add_parser.set_defaults(func=add)
 
     update_parser = subparsers.add_parser("update")
@@ -87,7 +86,6 @@ def unpickle_levermann_objs():
 
 
 def set(args):
-    print(args)
     sym = args.stock_symbol
 
     path = levermann.levermann_pickle_path(sym)
@@ -164,9 +162,14 @@ def list(args):
 
 def add(args):
     create_data_dir()
-    print(args)
 
     s = Stock(isin=args.ISIN)
+
+    path = levermann.levermann_pickle_path(s.symbol)
+    if os.path.isfile(path):
+        logger.info("Stock already exists (%s)" % path)
+        sys.exit(1)
+
     s.update_stock_info()
 
     logger.info("Adding Stock %s" % s.symbol)
