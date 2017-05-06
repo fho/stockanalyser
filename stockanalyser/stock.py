@@ -75,7 +75,8 @@ class Stock(object):
 
     def _fetch_finanzen_net_data(self):
         scrp = FinanzenNetScraper(self.finanzen_net_url, isin=self.isin)
-        self.quarterly_figure_dates = [scrp.fetch_recent_quarterly_figures_release_date()]
+        self.quarterly_figure_dates = scrp.fetch_recent_quarterly_figures_release_date()
+        self.quarterly_figure_dates
 
     def _lookupFundamentalUrl(self):
         lookup_url = "http://www.onvista.de/onvista/boxes/assetSearch.json?doSubmit=Suchen&portfolioName=&searchValue=%s" % self.isin
@@ -117,7 +118,6 @@ class Stock(object):
         self.analyst_ratings = scr.analyst_ratings()
 
     def last_quarterly_figures_release_date(self):
-        self.quarterly_figure_dates.sort()
         today = datetime.date.today()
         for d in reversed(self.quarterly_figure_dates):
             if d <= today:
@@ -125,12 +125,10 @@ class Stock(object):
 
 
     def is_quarterly_figures_release_date_outdated(self):
-        self.quarterly_figure_dates.sort()
         if (self.quarterly_figure_dates[-1] <= (datetime.date.today() -
             datetime.timedelta(days=60))):
                 return True
         return False
-
 
 
     def update_stock_info(self):
