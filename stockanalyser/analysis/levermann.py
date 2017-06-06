@@ -239,6 +239,16 @@ class Levermann(object):
 
         return True
 
+    def outdated(self):
+        if not self.evaluation_results:
+            return True
+
+        last = self.evaluation_results[-1]
+        if (last.timestamp < (datetime.datetime.now() -
+                              datetime.timedelta(days=3))):
+            return True
+        return False
+
     def eval_earning_growth(self):
         logger.debug("Evaluating earning growth")
         #TODO: ensure that eps is always sorted in stock
