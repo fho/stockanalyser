@@ -3,7 +3,7 @@ import calendar
 import pickle
 from datetime import date, timedelta
 import datetime
-from stockanalyser.data_source import yahoo
+from stockanalyser.data_source import yahoo, alphavantage
 from stockanalyser.exceptions import NotSupportedError, InvalidValueError
 from stockanalyser.config import *
 from stockanalyser import fileutils
@@ -271,12 +271,12 @@ class Levermann(object):
         d = last_weekday_of_month(date)
         prev_month_date = last_weekday_of_month(prev_month(date))
 
-        quote = yahoo.stock_quote(self.stock.symbol, d)
-        prev_quote = yahoo.stock_quote(self.stock.symbol, prev_month_date)
+        quote = alphavantage.stock_quote(self.stock.symbol, d)
+        prev_quote = alphavantage.stock_quote(self.stock.symbol, prev_month_date)
         q_diff = ((quote / prev_quote) - 1) * 100
 
-        ref_quote = yahoo.stock_quote(self.reference_index, d)
-        prev_ref_quote = yahoo.stock_quote(self.reference_index,
+        ref_quote = alphavantage.stock_quote(self.reference_index, d)
+        prev_ref_quote = alphavantage.stock_quote(self.reference_index,
                                            prev_month_date)
         ref_q_diff = ((ref_quote / prev_ref_quote) - 1) * 100
 
@@ -331,7 +331,7 @@ class Levermann(object):
 
     def _eval_quote_chg_daydiff(self, days_diff):
         before_date = closest_weekday(date.today() - timedelta(days=days_diff))
-        before_quote = yahoo.stock_quote(self.stock.symbol, before_date)
+        before_quote = alphavantage.stock_quote(self.stock.symbol, before_date)
 
         chg = ((float(self.stock.quote.amount) / before_quote) - 1) * 100
         return (chg, self._calc_quite_chg_points(chg))
@@ -392,13 +392,13 @@ class Levermann(object):
         qf_date = self.stock.last_quarterly_figures_release_date()
         qf_prev_day = prev_weekday(self.stock.last_quarterly_figures_release_date())
 
-        qf_previous_day_quote = yahoo.stock_quote(self.stock.symbol,
+        qf_previous_day_quote = alphavantage.stock_quote(self.stock.symbol,
                                                   qf_prev_day)
-        qf_day_quote = yahoo.stock_quote(self.stock.symbol, qf_date)
+        qf_day_quote = alphavantage.stock_quote(self.stock.symbol, qf_date)
         qf_reaction = ((qf_day_quote / qf_previous_day_quote) - 1) * 100
 
-        ref_index_quote = yahoo.stock_quote(self.reference_index, qf_date)
-        ref_previous_index_quote = yahoo.stock_quote(self.reference_index,
+        ref_index_quote = alphavantage.stock_quote(self.reference_index, qf_date)
+        ref_previous_index_quote = alphavantage.stock_quote(self.reference_index,
                                                      qf_prev_day)
         ref_index_chg = (((ref_index_quote / ref_previous_index_quote) - 1) *
                          100)

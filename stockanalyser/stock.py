@@ -132,7 +132,6 @@ class Stock(object):
 
 
     def update_stock_info(self):
-
         data = yahoo.get_stock_info(self.symbol)
         self.name = data["Name"]
         self.quote = Money(float(data["PreviousClose"]), data["Currency"])
