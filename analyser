@@ -110,9 +110,9 @@ def update(args):
     updated_stocks = []
 
     for l in levermann_objs:
-        print("Creating Levermann Analysis for %s" % l.stock.symbol)
-        l.stock.update_stock_info()
         if l.outdated():
+            print("Creating Levermann Analysis for %s" % l.stock.symbol)
+            l.stock.update_stock_info()
             if l.evaluate():
                 updated_stocks.append(l.stock.symbol)
         else:
