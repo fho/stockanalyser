@@ -37,6 +37,7 @@ def configure_argparse():
     add_parser.set_defaults(func=add)
 
     update_parser = subparsers.add_parser("update")
+    update_parser.add_argument("STOCK_SYMBOL", help="Stock Symbol", nargs="?")
     update_parser.set_defaults(func=update)
 
     set_parser = subparsers.add_parser("set")
@@ -106,8 +107,13 @@ def set(args):
 
 
 def update(args):
-    levermann_objs = unpickle_levermann_objs()
+    levermann_objs = []
     updated_stocks = []
+
+    if args.STOCK_SYMBOL:
+        levermann_objs.append(unpickle_levermann_sym(args.STOCK_SYMBOL))
+    else:
+        levermann_objs = unpickle_levermann_objs()
 
     for l in levermann_objs:
         if l.outdated():
