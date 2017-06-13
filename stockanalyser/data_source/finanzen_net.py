@@ -43,7 +43,7 @@ class FinanzenNetScraper(object):
         release_dates = []
         for r in rows:
             if r.xpath("td//text()='Quartalszahlen'"):
-                str_date = r.xpath("td[3]")[0].text_content()
+                str_date = r.xpath("td[4]")[0].text_content()
                 d = datetime.strptime(str_date, '%d.%m.%Y').date()
                 release_dates.append(d)
 
