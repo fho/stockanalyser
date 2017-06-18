@@ -3,11 +3,12 @@ import logging
 import json
 import datetime
 import time
+from stockanalyser.exceptions import InvalidValueError
 from stockanalyser.data_source import common
 
 logger = logging.getLogger(__name__)
 
-API_KEY="<YOUR-API-KEY>"
+API_KEY="<YOUR-API-KEY>" 
 BASE_URL="http://www.alphavantage.co/query"
 cache={}
 
@@ -19,7 +20,7 @@ def stock_quote(symbol, date):
     assert date.weekday() not in (6, 7)
     str_date = date.strftime("%Y/%m/%d")
     if symbol not in cache:
-        url = (BASE_URL + "?function=TIME_SERIES_DAILY&apikey=" + API_KEY +
+        url = (BASE_URL + "?function=TIME_SERIES_DAILY_ADJUSTED&apikey=" + API_KEY +
                "&outputsize=full" +
                "&symbol=" + symbol)
         logger.debug("Retrieving stock quote for '%s' on %s (%s)" % (symbol, date,
@@ -36,6 +37,12 @@ def stock_quote(symbol, date):
 
     f = float(r_json["Time Series (Daily)"][str(date)]["4. close"])
     logger.debug("stock quote for '%s' on %s: %s" % (symbol, date, f))
+    if f == 0.0:
+        raise InvalidValueError("Stock Quote from alphavantage is invalid (0) "
+                                "data: %s" % 
+                                r_json["Time Series (Daily)"][str(date)]
+                                ["4.  close"])
+                                
     return f
 
 
