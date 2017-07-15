@@ -44,6 +44,10 @@ class FinanzenNetScraper(object):
         for r in rows:
             if r.xpath("td//text()='Quartalszahlen'"):
                 str_date = r.xpath("td[4]")[0].text_content()
+                # if the string containts "(e)*" it means it's an estimated
+                # date, skip those we want reliable dates
+                if "(e)" in str_date:
+                    continue
                 d = datetime.strptime(str_date, '%d.%m.%Y').date()
                 release_dates.append(d)
 
