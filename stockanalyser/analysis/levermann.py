@@ -477,7 +477,7 @@ class Levermann(object):
         per = self.stock.price_earnings_ratio_5year().amount
         logger.debug("Evaluating 5year PER: %s" % (per))
 
-        if per < 12:
+        if per > 0 and per < 12:
             logger.debug("5 year PER <12: 1 Points")
             points = 1
         elif per >= 12 and per <= 16:
@@ -493,7 +493,7 @@ class Levermann(object):
         per = self.stock.price_earnings_ratio().amount
         logger.debug("Evaluating PER: %s" % (per))
 
-        if per < 12:
+        if per > 0 and per < 12:
             logger.debug("PER <12: 1 Points")
             points = 1
         elif per >= 12 and per <= 16:
