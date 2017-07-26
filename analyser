@@ -38,6 +38,8 @@ def configure_argparse():
 
     update_parser = subparsers.add_parser("update")
     update_parser.add_argument("STOCK_SYMBOL", help="Stock Symbol", nargs="?")
+    update_parser.add_argument("-f", "--force", help="enforce update",
+                               action="store_true")
     update_parser.set_defaults(func=update)
 
     set_parser = subparsers.add_parser("set")
@@ -116,11 +118,14 @@ def update(args):
         levermann_objs = unpickle_levermann_objs()
 
     for l in levermann_objs:
-        if l.outdated():
+        if args.force or l.outdated():
             print("Creating Levermann Analysis for %s" % l.stock.symbol)
             l.stock.update_stock_info()
-            if l.evaluate():
-                updated_stocks.append(l.stock.symbol)
+            try:
+                if l.evaluate():
+                    updated_stocks.append(l.stock.symbol)
+            except Exception as e:
+                print("creating levermann analyis failed: %s" % e)
         else:
             print("Analysis for %s is already uptodate" % l.stock.symbol)
 
