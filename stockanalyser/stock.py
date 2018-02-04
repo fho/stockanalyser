@@ -135,14 +135,7 @@ class Stock(object):
         data = yahoo.get_stock_info(self.symbol)
         self.name = data["Name"]
         self.quote = Money(float(data["PreviousClose"]), data["Currency"])
-        if data["MarketCapitalization"][-1] == "B":
-            self.market_cap = float(data["MarketCapitalization"][:-1]) * 10**9
-        elif data["MarketCapitalization"][-1] == "M":
-            self.market_cap = float(data["MarketCapitalization"][:-1]) * 10**6
-        else:
-            raise InvalidValueError("Unknown Suffix in MarketCap value from"
-                                    " yahoo: '%s'" %
-                                    data["MarketCapitalization"])
+        self.market_cap = float(data["MarketCapitalization"])
 
         if self.market_cap >= (5 * 10**9):
             self.cap_type = Cap.LARGE

@@ -54,29 +54,34 @@ def get_yql_result(params):
                 raise e
 
 
-def stock_quote(symbol, date):
-    assert date.weekday() not in (6, 7)
-    logger.debug("Retrieving stock quote for '%s' on %s" % (symbol, date))
-    str_date = date.strftime("%Y/%m/%d")
-    params = (("q", "select * from yahoo.finance.historicaldata where "
-                    "symbol = \"%s\" and startDate = \"%s\" "
-                    "and endDate = \"%s\"" % (symbol, str_date, str_date)),
-              ("format", "json"),
-              ("env", "store://datatables.org/alltableswithkeys"),
-              ("callback", ""))
-    return float(get_yql_result(params)["Close"])
-
-
 def get_stock_info(symbol):
-    # https://developer.yahoo.com/yql/console/?q=show%20tables&env=store://datatables.org/alltableswithkeys#h=select+Currency%2CMarketCapitalization%2CPreviousClose%2CName%2CStockExchange++from+yahoo.finance.quotes+where+symbol+%3D+%22GOOG%22
-    params = (("q", "select Currency,MarketCapitalization, PreviousClose,"
-                    "Name, StockExchange from yahoo.finance.quotes"
-                    " where symbol = \"%s\"" % symbol),
-              ("format", "json"),
-              ("env", "store://datatables.org/alltableswithkeys"),
-              ("callback", ""))
+    # from https://stackoverflow.com/a/47148296/537958
+    url = 'https://finance.yahoo.com/quote/' + symbol
+    req = urllib.request.Request(url)
+    resp = urllib.request.urlopen(req).read()
 
-    return get_yql_result(params)
+    r=resp.decode("utf-8")
+    i1=0
+    i1=r.find('root.App.main', i1)
+    i1=r.find('{', i1)
+    i2=r.find("\n", i1)
+    i2=r.rfind(';', i1, i2)
+    jsonstr=r[i1:i2]
+
+    data = json.loads(jsonstr)
+    market_cap=data['context']['dispatcher']['stores']['QuoteSummaryStore']['summaryDetail']['marketCap']['raw']
+    prev_close=data['context']['dispatcher']['stores']['QuoteSummaryStore']['summaryDetail']['previousClose']['raw']
+    currency=data['context']['dispatcher']['stores']['QuoteSummaryStore']['summaryDetail']['currency']
+    name=data['context']['dispatcher']['stores']['QuoteSummaryStore']['price']['shortName']
+
+
+    res = {}
+    res["Name"] = name
+    res["PreviousClose"] = prev_close
+    res["Currency"] = currency
+    res["MarketCapitalization"] = int(market_cap)
+
+    return res
 
 
 def lookupSymbol(isin):
@@ -89,6 +94,4 @@ def lookupSymbol(isin):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    r = stock_quote("VOW.DE", (datetime.datetime.now() -
-                               datetime.timedelta(days=1)).date())
-    print(r)
+    print(get_stock_info("VOW.DE"))
